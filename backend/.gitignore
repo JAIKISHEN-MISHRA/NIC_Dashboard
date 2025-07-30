@@ -1,0 +1,41 @@
+# General
+node_modules/
+.env
+.env.*   # for .env.local, .env.production, etc.
+dist/
+build/
+.cache/
+*.log
+*.tmp
+*.swp
+
+# Vite / CRA
+.vite/
+coverage/
+
+# React Native
+android/
+ios/
+*.keystore
+*.jks
+*.apk
+*.aab
+.expo/
+.expo-shared/
+*.xcworkspace
+*.xcodeproj
+Pods/
+*.pbxproj
+*.xcuserstate
+
+# macOS and Windows system files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Git
+.git/
+
+# VSCode
+.vscode/
