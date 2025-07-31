@@ -1,1 +1,7 @@
-
+Create a new database named --> m_dashboard_project
+Using Query Tool open the file dashboard_project.sql
+Run all Create Table
+For m_state table right click on the table -> select Import/Export Data --> Filename Select m_state_c.csv--> in Option Header Section Toggle as Yes--> in Columns keep columns available in csv file (i.e state_code,state_name,state_name_ll) Rest you can deselect -->Click on Ok
+For m_division --> Run INSERT Statement
+For m_district,m_taluka--> Follow same procedure as m_state
+After this Run all remaining sql statements as it is.
