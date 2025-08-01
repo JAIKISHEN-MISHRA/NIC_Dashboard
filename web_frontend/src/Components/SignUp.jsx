@@ -1,7 +1,7 @@
 import React from "react";
 import "../css/Login.css";
 
-export default function Login() {
+export default function SignUp() {
   return (
     <div className="container">
       {/* Header */}
@@ -22,17 +22,32 @@ export default function Login() {
 
       {/* Login Box */}
       <div className="login-box">
-        <h2 className="login-title">Login</h2>
+        <h2 className="login-title">SignUp</h2>
         <form className="form">
-          <label>Username<span className="required">*</span></label>
+          <label>First name<span className="required">*</span></label>
+          <input type="text" placeholder="Enter email or mobile number" />
+
+          <label>Middle name<span className="required">*</span></label>
+          <input type="text" placeholder="Enter email or mobile number" />
+
+           <label>Last name<span className="required">*</span></label>
+          <input type="text" placeholder="Enter email or mobile number" />
+
+          <label>Email<span className="required">*</span></label>
+          <input type="text" placeholder="Enter email or mobile number" />
+
+          <label>Mobile number<span className="required">*</span></label>
           <input type="text" placeholder="Enter email or mobile number" />
 
           <label>Password<span className="required">*</span></label>
           <input type="password" placeholder="Enter password" />
 
-          <a href="#" className="forgot">Forgot your password?</a>
+           <label>Confirm Password<span className="required">*</span></label>
+          <input type="password" placeholder="Enter password" />
 
-          <button type="submit" className="submit-btn">Submit</button>
+          {/* <a href="#" className="forgot">Forgot your password?</a> */}
+
+          <button type="submit" className="submit-btn">SignUp</button>
         </form>
       </div>
 
