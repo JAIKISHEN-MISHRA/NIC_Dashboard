@@ -1,75 +1,107 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { useRouter } from 'expo-router';
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
 
 export default function HomeScreen() {
+  const router = useRouter();
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const userAuthenticated = true; // 🔁 Change to false to force redirect to /login
+      setIsLoggedIn(userAuthenticated);
+      if (!userAuthenticated) {
+        router.replace('/login');
+      }
+    };
+    checkAuth();
+  }, []);
+
+  if (isLoggedIn === null) {
+    return (
+      <View style={styles.loader}>
+        <ActivityIndicator size="large" color="#FF6600" />
+        <Text>Checking login...</Text>
+      </View>
+    );
+  }
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Image source={require('@/assets/ashoka.png')} style={styles.logo} />
+        <Text style={styles.govText}>महाराष्ट्र शासन</Text>
+      </View>
+
+      <Text style={styles.title}>Welcome to the Government Scheme Dashboard</Text>
+      <Text style={styles.subtitle}>Select an action to proceed:</Text>
+
+      <TouchableOpacity style={styles.card} onPress={() => router.push('/dashboard')}>
+        <Text style={styles.cardText}>📊 View Scheme Insights</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.card} onPress={() => router.push('/upload')}>
+        <Text style={styles.cardText}>⬆️ Upload Scheme Data</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.card} onPress={() => router.push('/upgrade-role')}>
+        <Text style={styles.cardText}>🧑‍💼 Request Admin Access</Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  loader: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+  },
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#fff',
+  },
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    marginBottom: 30,
+    justifyContent: 'center',
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  logo: {
+    width: 30,
+    height: 30,
+    marginRight: 10,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  govText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#C62828',
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#555',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  card: {
+    backgroundColor: '#FF9933',
+    padding: 16,
+    borderRadius: 10,
+    marginBottom: 15,
+    alignItems: 'center',
+  },
+  cardText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
