@@ -8,6 +8,8 @@ import {
   getTalukas,
   submitSignup,
 } from "../services/api"; // Import from your new api.jsx
+import SHA256 from 'crypto-js/sha256';
+
 
 export default function SignUp() {
   const [formData, setFormData] = useState({
@@ -91,6 +93,12 @@ export default function SignUp() {
     }
 
     const { confirmPassword, ...payload } = formData;
+    const encryptedPassword = SHA256(password).toString();
+    console.log(encryptedPassword);
+ payload = {
+  ...rest,
+  password: encryptedPassword,
+};
 
     const { data, error } = await submitSignup(payload);
     if (error) {
