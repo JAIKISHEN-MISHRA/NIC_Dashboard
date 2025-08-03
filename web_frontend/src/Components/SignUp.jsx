@@ -73,40 +73,39 @@ export default function SignUp() {
     }
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (!formData.fname || !formData.email || !formData.password || !formData.confirmPassword) {
-      toast.error("Please fill all required fields.");
-      return;
-    }
+  if (!formData.fname || !formData.email || !formData.password || !formData.confirmPassword) {
+    toast.error("Please fill all required fields.");
+    return;
+  }
 
-    if (!passwordStrength) {
-      toast.error("Password must include 1 uppercase, 1 digit, 1 special character and be at least 8 characters.");
-      return;
-    }
+  if (!passwordStrength) {
+    toast.error("Password must include 1 uppercase, 1 digit, 1 special character and be at least 8 characters.");
+    return;
+  }
 
-    if (!passwordMatch) {
-      toast.error("Passwords do not match.");
-      return;
-    }
+  if (!passwordMatch) {
+    toast.error("Passwords do not match.");
+    return;
+  }
 
-    const { confirmPassword, ...payload } = formData;
-    const encryptedPassword = SHA256(password).toString();
-    console.log(encryptedPassword);
- payload = {
-  ...rest,
-  password: encryptedPassword,
+  const { confirmPassword, ...rest } = formData;
+  const encryptedPassword = SHA256(formData.password).toString();
+  let payload = {
+    ...rest,
+    password: encryptedPassword,
+  };
+
+  const { data, error } = await submitSignup(payload);
+  if (error) {
+    toast.error("Signup failed.");
+  } else {
+    toast.success("Signup request submitted! Awaiting admin approval.");
+  }
 };
 
-    const { data, error } = await submitSignup(payload);
-    if (error) {
-      toast.error("Signup failed.");
-    } else {
-      toast.success("Signup request submitted! Awaiting admin approval.");
-    }
-  };
 
   // Fetch initial state list
   useEffect(() => {

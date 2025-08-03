@@ -8,7 +8,7 @@ import SignUp from './Components/SignUp';
 import Home from "./pages/Home";
 import AdminRequest from './pages/AdminRequest';
 // import Upload from './pages/Upload';         
-// import AddScheme from './pages/AddScheme';   
+import AddScheme from './pages/AddScheme';   
 import Layout from './Components/Layout';    
 
 function App() {
@@ -24,8 +24,8 @@ function App() {
           <Route element={<Layout />}>
             <Route path="/" element={<Home />} />
             <Route path="/AdminRequest" element={<AdminRequest />} />
-            {/* <Route path="/upload" element={<Upload />} />
-            <Route path="/AddScheme" element={<AddScheme />} /> */}
+            {/* <Route path="/upload" element={<Upload />} /> */}
+            <Route path="/AddScheme" element={<AddScheme />} />
           </Route>
         </Routes>
       </BrowserRouter>
