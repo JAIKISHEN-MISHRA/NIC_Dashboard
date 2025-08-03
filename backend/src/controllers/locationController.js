@@ -10,6 +10,7 @@ exports.getStates = async (req, res) => {
   }
 };
 
+
 exports.getDivisions = async (req, res) => {
   const { state_code } = req.params;
   try {
