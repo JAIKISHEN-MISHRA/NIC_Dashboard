@@ -1,27 +1,20 @@
 import React,{useEffect,useState} from 'react'
 import Sidenav from '../Components/Sidenav'
 import Box from '@mui/material/Box';
-import InboxIcon from '@mui/icons-material/MoveToInbox';
 import Navbar from "../Components/Navbar"
 import Grid from '@mui/material/Grid';
 import Card from '@mui/material/Card';
-import CardActions from '@mui/material/CardActions';
 import WheelchairPickupIcon from '@mui/icons-material/WheelchairPickup';
 import CardContent from '@mui/material/CardContent';
 import ManIcon from '@mui/icons-material/Man';
 import Collapse from '@mui/material/Collapse';
 import WomanIcon from '@mui/icons-material/Woman';
-import CardMedia from '@mui/material/CardMedia';
-import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 import "../css/Dash.css";
-import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import Animate from '../charts/Animate';
-import BarChart from '../charts/BarChart';
 import PieChart from '../charts/PieChart';
 import Chart from "../charts/Chart";
-import axios from 'axios';
 
 function Home() {
    const [maleCount, setMaleCount] = useState(null);
