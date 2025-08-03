@@ -381,11 +381,19 @@ VALUES ('0045','001','Entertainment+Ad+Betting Taxes','करमणूक कर
 ('0002','001','Education Cess','शिक्षण उपकर'),
 ('0003','001','BBR(Urban Development)','बी.बी. आर (नगर विकास )'),
 ('0004','001','RTI','आर.टी. आय');
-
+ 
 INSERT INTO m_sub_category(sub_category_code,m_category_code,category_code,sub_category_name,sub_category_name_ll)
 VALUES 
 ('01','001','0029','Target','उद्दिष्ट'),
 ('02','001','0029','Collection','वसूली')
+('03','001','0045','Target','उद्दिष्ट'),
+('04','001','0045','Collection','वसूली'),
+('05','001','0853','Target','उद्दिष्ट'),
+('06','001','0853','Collection','वसूली'),
+('07','001','0001','Collection','वसूली'),
+('08','001','0002','Collection','वसूली'),
+('09','001','0003','Collection','वसूली'),
+('10','001','0004','Collection','वसूली')
 
 INSERT INTO t_001_table (m_category_code,category_code,sub_category_code,state_code,division_code,district_code,taluka_code,figures, month_num,year_num)
 VALUES
@@ -551,4 +559,5 @@ $$ LANGUAGE plpgsql;
 
 --Test Query :
 SELECT * FROM get_target_vs_collection1();
+
 
