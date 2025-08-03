@@ -1,7 +1,16 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import "../css/Login.css";
 
 export default function Login() {
+  const navigate = useNavigate();
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    localStorage.setItem("loggedIn", "true");
+    navigate("/");
+  };
+
   return (
     <div className="container">
       {/* Header */}
@@ -23,23 +32,40 @@ export default function Login() {
       {/* Login Box */}
       <div className="login-box">
         <h2 className="login-title">Login</h2>
-        <form className="form">
-          <label>Username<span className="required">*</span></label>
-          <input type="text" placeholder="Enter email or mobile number" />
+        <form className="form" onSubmit={handleSubmit}>
+          <label>
+            Username<span className="required">*</span>
+          </label>
+          <input type="text" placeholder="Enter email or mobile number" required />
 
-          <label>Password<span className="required">*</span></label>
-          <input type="password" placeholder="Enter password" />
+          <label>
+            Password<span className="required">*</span>
+          </label>
+          <input type="password" placeholder="Enter password" required />
 
-          <a href="#" className="forgot">Forgot your password?</a>
+          <div className="login-links">
+            <a href="#" className="forgot">Forgot your password?</a>
+          </div>
 
-          <button type="submit" className="submit-btn">Submit</button>
+          <button type="submit" className="submit-btn">Login</button>
+
+          <div className="signup-link">
+            <p>
+              Don’t have an account?{" "}
+              <span
+                className="create-link"
+                onClick={() => navigate("/signup")}
+                style={{ color: "#007bff", cursor: "pointer", textDecoration: "underline" }}
+              >
+                Create one
+              </span>
+            </p>
+          </div>
         </form>
       </div>
 
       {/* Footer */}
       <div className="footer">
-        {/* <p>WELCOME TO</p>
-        <h3>Pradhan Mantri Yojana</h3> */}
         <img src="/ashok-chakra.png" alt="Ashok Chakra" className="chakra" />
       </div>
     </div>
