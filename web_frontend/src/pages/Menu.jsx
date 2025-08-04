@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 // import { getStates, getDivisions, getDistricts, getTalukas } from '../services/api.ts';
-import { getStates, getDivisions, getDistricts, getTalukas } from '../services/api';
+import { getStates, getDivisions, getDistricts, getTalukas } from '../services/api.jsx';
 
 import { Box, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 import Typography from '@mui/material/Typography';

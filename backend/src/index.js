@@ -12,6 +12,9 @@ app.use(express.json());
 // API routes
 app.use('/api', locationRoutes);
 app.use('/api', signupRoutes);
+const schemeRoutes = require('./routes/schemeRoutes');
+app.use('/api', schemeRoutes);
+
 
 // Health check
 app.get('/', (req, res) => {

@@ -47,7 +47,7 @@ const [age, setAge] = useState('');
   return (
     <>
     <Navbar/>
-     <Box height={50}/>
+     <Box height={30}/>
    <Box sx={{ display: 'flex' }}>  
       <Sidenav/>
       
