@@ -14,6 +14,8 @@ app.use('/api', locationRoutes);
 app.use('/api', signupRoutes);
 const schemeRoutes = require('./routes/schemeRoutes');
 app.use('/api', schemeRoutes);
+const dashboardRoutes = require('./routes/dashboardRoutes');
+app.use('/api', dashboardRoutes);
 
 
 // Health check

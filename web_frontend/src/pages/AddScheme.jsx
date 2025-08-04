@@ -18,6 +18,7 @@ import {
 import { Add, Delete } from '@mui/icons-material';
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { fetchSchemes ,fetchSchemeStructure} from '../services/api';
 
 const AddSchemeForm = () => {
   const [scheme, setScheme] = useState({ name: '', name_ll: '' });
@@ -27,27 +28,25 @@ const AddSchemeForm = () => {
   const [schemeStructure, setSchemeStructure] = useState([]);
 
   useEffect(() => {
-    fetchSchemes();
-  }, []);
-
-  const fetchSchemes = async () => {
-    try {
-      const res = await axios.get('http://localhost:5000/api/scheme/list');
-      setExistingSchemes(res.data);
-    } catch (error) {
-      console.error('Error fetching schemes:', error);
-    }
+  const loadSchemes = async () => {
+    const { data, error } = await fetchSchemes();
+    if (data) setExistingSchemes(data);
+    else console.error('Failed to load schemes');
   };
 
-  const fetchSchemeStructure = async (schemeCode) => {
-    try {
-      const res = await axios.get(`http://localhost:5000/api/scheme/${schemeCode}/categories`);
-      setSchemeStructure(res.data);
-      setExpandedScheme(schemeCode);
-    } catch (error) {
-      console.error('Error fetching structure:', error);
-    }
-  };
+  loadSchemes();
+}, []);
+ 
+
+  const handleFetchStructure = async (schemeCode) => {
+  const { data, error } = await fetchSchemeStructure(schemeCode);
+  if (data) {
+    setSchemeStructure(data);
+    setExpandedScheme(schemeCode);
+  } else {
+    console.error("Failed to load scheme structure");
+  }
+};
 
   const handleSchemeChange = (e) => {
     setScheme({ ...scheme, [e.target.name]: e.target.value });
@@ -236,7 +235,7 @@ const renderCategoryTableRows = (treeData) => {
           <div key={s.scheme_code}>
             <Button
               variant="outlined"
-              onClick={() => fetchSchemeStructure(s.scheme_code)}
+              onClick={() => handleFetchStructure(s.scheme_code)}
               className="my-1"
             >
               {s.scheme_name} ({s.scheme_code})
