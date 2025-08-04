@@ -96,3 +96,65 @@ exports.getAllSchemes = async (req, res) => {
   }
 };
 
+// Create table if it doesn't exist
+async function ensureSchemeDataTable(scheme_code) {
+  const tableName = `t_${scheme_code}_data`;
+  const createQuery = `
+    CREATE TABLE IF NOT EXISTS ${tableName} (
+      id SERIAL PRIMARY KEY,
+      state_code VARCHAR(2),
+      division_code VARCHAR(3),
+      district_code VARCHAR(3),
+      taluka_code VARCHAR(4),
+      year VARCHAR(4),
+      month VARCHAR(2),
+      data JSONB,
+      insert_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `;
+  await pool.query(createQuery);
+}
+
+// Insert scheme data
+exports.insertSchemeData = async (req, res) => {
+  const {
+    scheme_code,
+    state_code,
+    division_code,
+    district_code,
+    taluka_code,
+    year,
+    month,
+    data,
+  } = req.body;
+
+  const tableName = `t_${scheme_code}_data`;
+
+  try {
+    await ensureSchemeDataTable(scheme_code);
+
+    const insertQuery = `
+      INSERT INTO ${tableName} (
+        state_code, division_code, district_code, taluka_code,
+        year, month, data
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING id
+    `;
+
+    const values = [
+      state_code,
+      division_code,
+      district_code,
+      taluka_code,
+      year,
+      month,
+      data, // this should be a JS object, automatically converted to JSONB
+    ];
+
+    const result = await pool.query(insertQuery, values);
+    res.status(200).json({ message: 'Data inserted', id: result.rows[0].id });
+  } catch (error) {
+    console.error('Error inserting scheme data:', error);
+    res.status(500).json({ error: 'Failed to insert data' });
+  }
+};

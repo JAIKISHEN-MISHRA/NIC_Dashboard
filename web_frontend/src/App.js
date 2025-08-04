@@ -7,9 +7,10 @@ import Login from './Components/Login';
 import SignUp from './Components/SignUp';
 import Home from "./pages/Home";
 import AdminRequest from './pages/AdminRequest';
-// import Upload from './pages/Upload';         
+import Upload from './pages/Upload';         
 import AddScheme from './pages/AddScheme';   
 import Layout from './Components/Layout';    
+import Dashboard from './pages/Dashboard';
 
 function App() {
   return (
@@ -22,9 +23,9 @@ function App() {
 
           {/* Protected routes (with Navbar + Sidenav layout) */}
           <Route element={<Layout />}>
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={<Dashboard />} />
             <Route path="/AdminRequest" element={<AdminRequest />} />
-            {/* <Route path="/upload" element={<Upload />} /> */}
+            <Route path="/upload" element={<Upload />} />
             <Route path="/AddScheme" element={<AddScheme />} />
           </Route>
         </Routes>
