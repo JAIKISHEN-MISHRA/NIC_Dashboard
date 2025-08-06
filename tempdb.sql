@@ -54,3 +54,34 @@ INSERT INTO m_role (
   'VW', 'Viewer', 'दर्शक', TRUE,
   CURRENT_TIMESTAMP, '127.0.0.1', 'system'
 );
+
+--State Level
+
+INSERT INTO m_user_level (
+  user_level_code,user_level, user_level_ll, is_active,
+  insert_date, insert_ip, insert_by
+) VALUES (
+  'ST', 'STATE', 'राज्य', TRUE,
+  CURRENT_TIMESTAMP, '127.0.0.1', 'system'
+);
+
+
+--Division Level
+
+INSERT INTO m_user_level (
+  user_level_code,user_level, user_level_ll, is_active,
+  insert_date, insert_ip, insert_by
+) VALUES (
+  'DV', 'DIVISION', 'विभाग', TRUE,
+  CURRENT_TIMESTAMP, '127.0.0.1', 'system'
+);
+
+--District Level
+
+INSERT INTO m_user_level (
+  user_level_code,user_level, user_level_ll, is_active,
+  insert_date, insert_ip, insert_by
+) VALUES (
+  'DT', 'DISTRICT', 'जिल्हा', TRUE,
+  CURRENT_TIMESTAMP, '127.0.0.1', 'system'
+);
