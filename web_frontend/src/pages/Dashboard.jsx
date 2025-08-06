@@ -101,6 +101,7 @@ export default function Dashboard() {
           taluka_code: selectedTaluka,
         });
         setTimeSeriesData(res.data);
+        console.log(res.data)
       } else {
         const res = await getDashboardData({
           scheme_code: selectedScheme,
@@ -112,6 +113,7 @@ export default function Dashboard() {
           month,
         });
         setDashboardData(res.data);
+        console.log(res.data);
       }
     } catch (err) {
       setError("Failed to fetch dashboard data.");
@@ -173,7 +175,7 @@ export default function Dashboard() {
       <Box display="flex" gap={2} flexWrap="wrap" mb={3}>
         {dropdowns.map(({ label, value, onChange, options, disabled = false }) => (
           <FormControl key={label} disabled={disabled} sx={{ minWidth: 140 }}>
-            <InputLabel>{label}</InputLabel>
+            {/* <InputLabel>{label}</InputLabel> */}
             <Select value={value} onChange={(e) => onChange(e.target.value)} displayEmpty>
               <MenuItem value="">Select {label}</MenuItem>
               {options.map((opt) => (

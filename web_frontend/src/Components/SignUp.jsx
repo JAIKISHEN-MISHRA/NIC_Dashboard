@@ -12,24 +12,28 @@ import SHA256 from 'crypto-js/sha256';
 
 
 export default function SignUp() {
-  const [formData, setFormData] = useState({
-    fname: "",
-    mname: "",
-    lname: "",
-    email: "",
-    mobile: "",
-    password: "",
-    confirmPassword: "",
-    state: "",
-    division: "",
-    district: "",
-    taluka: "",
-  });
+ const [formData, setFormData] = useState({
+  fname: "",
+  mname: "",
+  lname: "",
+  email: "",
+  mobile: "",
+  password: "",
+  confirmPassword: "",
+  state: "",
+  division: "",
+  district: "",
+  taluka: "",
+  department: "",  
+});
+
 
   const [states, setStates] = useState([]);
   const [divisions, setDivisions] = useState([]);
   const [districts, setDistricts] = useState([]);
   const [talukas, setTalukas] = useState([]);
+  const [onboardMode, setOnboardMode] = useState("location"); // default
+
 
   const [passwordMatch, setPasswordMatch] = useState(true);
   const [passwordStrength, setPasswordStrength] = useState(true);
@@ -38,42 +42,63 @@ export default function SignUp() {
 
   // Handle form changes
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+  const { name, value } = e.target;
+  setFormData((prev) => ({ ...prev, [name]: value }));
 
-    if (name === "password") {
-      setPasswordStrength(passwordRegex.test(value));
-    }
+  if (name === "password") {
+    setPasswordStrength(passwordRegex.test(value));
+  }
 
-    if (name === "confirmPassword" || name === "password") {
-      const newPass = name === "password" ? value : formData.password;
-      const confirmPass = name === "confirmPassword" ? value : formData.confirmPassword;
-      setPasswordMatch(newPass === confirmPass);
-    }
+  if (name === "confirmPassword" || name === "password") {
+    const newPass = name === "password" ? value : formData.password;
+    const confirmPass = name === "confirmPassword" ? value : formData.confirmPassword;
+    setPasswordMatch(newPass === confirmPass);
+  }
 
-    if (name === "state") {
-      setFormData((prev) => ({ ...prev, division: "", district: "", taluka: "" }));
-      setDivisions([]);
-      setDistricts([]);
-      setTalukas([]);
-      fetchDivisions(value);
-    }
+  if (name === "state") {
+    setFormData((prev) => ({
+      ...prev,
+      division: "",
+      district: "",
+      taluka: "",
+      department: "" // reset department when state changes
+    }));
+    setDivisions([]);
+    setDistricts([]);
+    setTalukas([]);
+    fetchDivisions(value);
+  }
 
-    if (name === "division") {
-      setFormData((prev) => ({ ...prev, district: "", taluka: "" }));
-      setDistricts([]);
-      setTalukas([]);
-      fetchDistricts(formData.state, value);
-    }
+  if (name === "division") {
+    setFormData((prev) => ({ ...prev, district: "", taluka: "", department: "" }));
+    setDistricts([]);
+    setTalukas([]);
+    fetchDistricts(formData.state, value);
+  }
 
-    if (name === "district") {
-      setFormData((prev) => ({ ...prev, taluka: "" }));
-      setTalukas([]);
-      fetchTalukas(formData.state, formData.division, value);
-    }
-  };
+  if (name === "district") {
+    setFormData((prev) => ({ ...prev, taluka: "", department: "" }));
+    setTalukas([]);
+    fetchTalukas(formData.state, formData.division, value);
+  }
 
-  const handleSubmit = async (e) => {
+  if (name === "department") {
+    // clear location fields if department is entered
+    setFormData((prev) => ({
+      ...prev,
+      department: value,
+      division: "",
+      district: "",
+      taluka: "",
+    }));
+    setDivisions([]);
+    setDistricts([]);
+    setTalukas([]);
+  }
+};
+
+
+ const handleSubmit = async (e) => {
   e.preventDefault();
 
   if (!formData.fname || !formData.email || !formData.password || !formData.confirmPassword) {
@@ -91,6 +116,19 @@ export default function SignUp() {
     return;
   }
 
+  if (onboardMode === "department") {
+  if (!formData.department.trim()) {
+    toast.error("Please enter Department name.");
+    return;
+  }
+} else {
+  if (!formData.division || !formData.district || !formData.taluka) {
+    toast.error("Please select Division, District, and Taluka.");
+    return;
+  }
+}
+
+
   const { confirmPassword, ...rest } = formData;
   const encryptedPassword = SHA256(formData.password).toString();
   let payload = {
@@ -105,6 +143,7 @@ export default function SignUp() {
     toast.success("Signup request submitted! Awaiting admin approval.");
   }
 };
+
 
 
   // Fetch initial state list
@@ -189,36 +228,77 @@ export default function SignUp() {
               </option>
             ))}
           </select>
+          <div style={{ marginTop: "1rem" }}>
+  <label>
+    <input
+      type="radio"
+      name="onboardMode"
+      value="location"
+      checked={onboardMode === "location"}
+      onChange={() => setOnboardMode("location")}
+    />
+    Location
+  </label>
+  &nbsp;&nbsp;
+  <label>
+    <input
+      type="radio"
+      name="onboardMode"
+      value="department"
+      checked={onboardMode === "department"}
+      onChange={() => setOnboardMode("department")}
+    />
+    Department
+  </label>
+</div>
 
-          <label>Division</label>
-          <select name="division" value={formData.division} onChange={handleChange} disabled={!formData.state}>
-            <option value="">Select Division</option>
-            {divisions.map((d) => (
-              <option key={d.division_code} value={d.division_code}>
-                {d.division_name}
-              </option>
-            ))}
-          </select>
+        {onboardMode === "department" && (
+  <>
+    <label>Department<span className="required">*</span></label>
+    <input
+      name="department"
+      value={formData.department}
+      onChange={handleChange}
+      required
+    />
+  </>
+)}
 
-          <label>District</label>
-          <select name="district" value={formData.district} onChange={handleChange} disabled={!formData.division}>
-            <option value="">Select District</option>
-            {districts.map((d) => (
-              <option key={d.district_code} value={d.district_code}>
-                {d.district_name}
-              </option>
-            ))}
-          </select>
 
-          <label>Taluka</label>
-          <select name="taluka" value={formData.taluka} onChange={handleChange} disabled={!formData.district}>
-            <option value="">Select Taluka</option>
-            {talukas.map((t) => (
-              <option key={t.taluka_code} value={t.taluka_code}>
-                {t.taluka_name}
-              </option>
-            ))}
-          </select>
+
+         {onboardMode === "location" && (
+  <>
+    <label>Division</label>
+    <select name="division" value={formData.division} onChange={handleChange} disabled={!formData.state}>
+      <option value="">Select Division</option>
+      {divisions.map((d) => (
+        <option key={d.division_code} value={d.division_code}>
+          {d.division_name}
+        </option>
+      ))}
+    </select>
+
+    <label>District</label>
+    <select name="district" value={formData.district} onChange={handleChange} disabled={!formData.division}>
+      <option value="">Select District</option>
+      {districts.map((d) => (
+        <option key={d.district_code} value={d.district_code}>
+          {d.district_name}
+        </option>
+      ))}
+    </select>
+
+    <label>Taluka</label>
+    <select name="taluka" value={formData.taluka} onChange={handleChange} disabled={!formData.district}>
+      <option value="">Select Taluka</option>
+      {talukas.map((t) => (
+        <option key={t.taluka_code} value={t.taluka_code}>
+          {t.taluka_name}
+        </option>
+      ))}
+    </select>
+  </>
+)}
 
           <button type="submit" className="submit-btn">Sign Up</button>
         </form>

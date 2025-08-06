@@ -22,3 +22,35 @@ CREATE TABLE signup (
   CONSTRAINT fk_signup_district FOREIGN KEY (district_code) REFERENCES m_district(district_code),
   CONSTRAINT fk_signup_taluka FOREIGN KEY (taluka_code) REFERENCES m_taluka(taluka_code)
 );
+
+ALTER TABLE signup ADD COLUMN department TEXT;
+ALTER TABLE signup ALTER COLUMN division_code DROP NOT NULL;
+ALTER TABLE signup ALTER COLUMN district_code DROP NOT NULL;
+ALTER TABLE signup ALTER COLUMN taluka_code DROP NOT NULL;
+
+-- SuperAdmin
+INSERT INTO m_role (
+  role_code, role_name, role_name_ll, is_active,
+  insert_date, insert_ip, insert_by
+) VALUES (
+  'SA', 'SuperAdmin', 'सुपरअॅडमिन', TRUE,
+  CURRENT_TIMESTAMP, '127.0.0.1', 'system'
+);
+
+-- Admin
+INSERT INTO m_role (
+  role_code, role_name, role_name_ll, is_active,
+  insert_date, insert_ip, insert_by
+) VALUES (
+  'AD', 'Admin', 'अॅडमिन', TRUE,
+  CURRENT_TIMESTAMP, '127.0.0.1', 'system'
+);
+
+-- Viewer
+INSERT INTO m_role (
+  role_code, role_name, role_name_ll, is_active,
+  insert_date, insert_ip, insert_by
+) VALUES (
+  'VW', 'Viewer', 'दर्शक', TRUE,
+  CURRENT_TIMESTAMP, '127.0.0.1', 'system'
+);
