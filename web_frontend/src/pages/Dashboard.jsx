@@ -111,6 +111,7 @@ export default function Dashboard() {
           taluka_code: selectedTaluka,
         });
         setTimeSeriesData(res.data);
+        console.log(res.data)
       } else {
         const res = await getDashboardData({
           scheme_code: selectedScheme,
@@ -122,6 +123,7 @@ export default function Dashboard() {
           month,
         });
         setDashboardData(res.data);
+        console.log(res.data);
       }
     } catch (err) {
       setError("Failed to fetch dashboard data.");

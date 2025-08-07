@@ -12,6 +12,7 @@ import AddScheme from './pages/AddScheme';
 import Layout from './Components/Layout';    
 import Dashboard from './pages/Dashboard';
 import MainPage from './pages/MainPage';
+import ChangePassword from './pages/ChangePassword';
 
 function App() {
   return (
@@ -22,7 +23,8 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
           <Route path='/Main' element={<MainPage/>}/>
-          
+                    <Route path='/change-password' element={<ChangePassword/>}/>
+
           {/* Protected routes (with Navbar + Sidenav layout) */}
           <Route element={<Layout />}>
             <Route path="/" element={<Dashboard />} />

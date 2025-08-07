@@ -79,13 +79,12 @@ export default function Navbar() {
  const navigate = useNavigate();
 
 const handleLogin = () => {
-  localStorage.setItem("loggedIn", "true");
   navigate("/login");
 };
 
   const handleLogout = () => {
-    localStorage.removeItem("loggedIn");
-    window.location.reload();
+    localStorage.clear();
+navigate("/login");
   };
 
   const isMenuOpen = Boolean(anchorEl);
