@@ -225,3 +225,33 @@ VALUES
 ('ST_SA_01', 'SA', 'ST', 'ST_SA_USER', 'NIC@2024')
 
 SELECT * FROM m_user1;
+
+
+-- Add column to track who approved the signup
+ALTER TABLE signup
+ADD COLUMN approved_by VARCHAR(20);
+
+-- Add foreign key constraint linking to m_user1
+ALTER TABLE signup
+ADD CONSTRAINT fk_signup_approved_by
+FOREIGN KEY (approved_by) REFERENCES m_user1(user_code);
+
+-- Add foreign key constraint linking to m_user1
+ALTER TABLE signup
+ADD CONSTRAINT fk_signup_approved_by
+FOREIGN KEY (approved_by) REFERENCES m_user1(user_code);
+
+
+ALTER TABLE m_user1
+ADD COLUMN is_assigned BOOLEAN NOT NULL DEFAULT FALSE;
+
+UPDATE m_user1
+SET is_active = false,
+    is_assigned = false;
+
+
+UPDATE m_user1
+SET is_active = true,
+    is_assigned = false
+WHERE user_code = 'ST_SA_01';
+

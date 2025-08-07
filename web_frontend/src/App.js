@@ -11,6 +11,7 @@ import Upload from './pages/Upload';
 import AddScheme from './pages/AddScheme';   
 import Layout from './Components/Layout';    
 import Dashboard from './pages/Dashboard';
+import ChangePassword from './pages/ChangePassword';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
           {/* Public routes (no layout) */}
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
+          <Route path='/change-password' element={<ChangePassword/>}/>
 
           {/* Protected routes (with Navbar + Sidenav layout) */}
           <Route element={<Layout />}>

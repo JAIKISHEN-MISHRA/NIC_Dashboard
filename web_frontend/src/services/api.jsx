@@ -67,3 +67,11 @@ export const getDashboardData = async (filters) =>
   safeRequest(api.post('/getDashboardData', filters));
 
 export const getTimeSeriesData = (payload) => axios.post(`${BASE_URL}/dashboard/timeseries`, payload);
+export const loginUser = async (credentials) => {
+  return safeRequest(api.post('/login', credentials));
+};
+
+export const changePassword = async (payload) => {
+  return safeRequest(api.post('/change-password', payload));
+};
+
