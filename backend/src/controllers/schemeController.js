@@ -96,6 +96,20 @@ exports.getAllSchemes = async (req, res) => {
   }
 };
 
+// Aradhana
+exports.getAllSchemes2 = async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT * FROM t_sch004_data`
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching schemes:', err);
+    res.status(500).json({ error: 'Failed to fetch scheme list' });
+  }
+};
+// 
+
 // Create table if it doesn't exist
 async function ensureSchemeDataTable(scheme_code) {
   const tableName = `t_${scheme_code}_data`;

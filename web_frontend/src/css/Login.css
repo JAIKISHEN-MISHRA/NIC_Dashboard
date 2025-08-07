@@ -126,3 +126,9 @@ input:focus {
   margin-top: 10px;
   width: 150px;
 }
+.select{
+  padding: 10px;
+  border: 1px solid #ffcccc;
+  border-radius: 20px;
+  outline: none;
+}

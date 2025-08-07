@@ -11,6 +11,7 @@ import Upload from './pages/Upload';
 import AddScheme from './pages/AddScheme';   
 import Layout from './Components/Layout';    
 import Dashboard from './pages/Dashboard';
+import MainPage from './pages/MainPage';
 
 function App() {
   return (
@@ -20,13 +21,15 @@ function App() {
           {/* Public routes (no layout) */}
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
-
+          <Route path='/Main' element={<MainPage/>}/>
+          
           {/* Protected routes (with Navbar + Sidenav layout) */}
           <Route element={<Layout />}>
             <Route path="/" element={<Dashboard />} />
             <Route path="/AdminRequest" element={<AdminRequest />} />
             <Route path="/upload" element={<Upload />} />
             <Route path="/AddScheme" element={<AddScheme />} />
+          
           </Route>
         </Routes>
       </BrowserRouter>

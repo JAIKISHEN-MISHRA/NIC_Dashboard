@@ -37,12 +37,26 @@ export const getTalukas = async (stateCode, divisionCode, districtCode) =>
 export const fetchSchemes = async () => {
   try {
     const response = await axios.get(`${BASE_URL}/scheme/list`);
+    console.log(response)
     return { data: response.data, error: null };
   } catch (error) {
     console.error('Error fetching schemes:', error);
     return { data: null, error };
   }
 };
+
+export const fetchSchemes2 = async () => {
+  try {
+    const response = await axios.get(`${BASE_URL}/scheme/list2`);
+    console.log(response)
+    return { data: response.data, error: null };
+  } catch (error) {
+    console.error('Error fetching schemes:', error);
+    return { data: null, error };
+  }
+};
+
+
 export const uploadSchemeData = async (payload) => {
   try {
     const response = await axios.post(`${BASE_URL}/scheme/data`, payload);
