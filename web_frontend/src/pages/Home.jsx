@@ -1,64 +1,53 @@
-import React,{useEffect,useState} from 'react'
-import Sidenav from '../Components/Sidenav'
-import Box from '@mui/material/Box';
-import Navbar from "../Components/Navbar"
-import Grid from '@mui/material/Grid';
-import Card from '@mui/material/Card';
-import WheelchairPickupIcon from '@mui/icons-material/WheelchairPickup';
-import CardContent from '@mui/material/CardContent';
-import ManIcon from '@mui/icons-material/Man';
-import Collapse from '@mui/material/Collapse';
-import WomanIcon from '@mui/icons-material/Woman';
-import Typography from '@mui/material/Typography';
-import Stack from '@mui/material/Stack';
-import "../css/Dash.css";
-import Animate from '../charts/Animate';
-import PieChart from '../charts/PieChart';
-import Chart from "../charts/Chart";
-import axios from 'axios';
-import Menu from "../pages/Menu";
-import SimpleDropdownRow from '../pages/Menu';
-import InputLabel from '@mui/material/InputLabel';
-import MenuItem from '@mui/material/MenuItem';
-import FormControl from '@mui/material/FormControl';
-import Select from '@mui/material/Select';
+import React from 'react';
+import BannerSlider from '../Components/Banner';
+import OnboardingSteps from './Onboarding';
+import '../css/MainPage.css';
+import { Container, Typography, Card, CardContent, Box } from '@mui/material';
+import { motion } from 'framer-motion';
+import AboutMahitiSetu from '../Components/AboutMahitiSetu';
 
-
-function Home() {
-   const [maleCount, setMaleCount] = useState(null);
-const [showOtherDetails, setShowOtherDetails] = useState(false);
-
-
-//    useEffect(() => {
-//   axios.get('http://localhost:5000/api/countmale')
-//     .then((res) => {
-//       setMaleCount(res.data.count); // Use res.data directly in Axios
-//     })
-//     .catch((err) => {
-//       console.error("Error fetching male count:", err);
-//     });
-// }, []);
-const [age, setAge] = useState('');
-
-  const handleChange = (event) => {
-    setAge(event.target.value);
-  };
-
+export default function Home() {
   return (
-    <>
-    <Navbar/>
-     <Box height={30}/>
-   <Box sx={{ display: 'flex' }}>  
-      <Sidenav/>
-      
-      <SimpleDropdownRow/>
+    <div>
+      {/* Banner Slider */}
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }}>
+        <BannerSlider />
+      </motion.div>
 
-     </Box> 
+      {/* Dashboard Overview Text */}
+      <Container maxWidth="lg" sx={{ my: 5 }}>
+        <motion.div
+          initial={{ x: -50, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ duration: 0.6 }}
+        >
+          <Card elevation={4} sx={{ borderRadius: 3, p: 2 }}>
+            <CardContent>
+              <Typography variant="h4" gutterBottom color="primary">
+                Dashboard Overview
+              </Typography>
+              <Typography variant="body1" color="text.secondary">
+                The dashboard allows users to view scheme-wise data in a visual format, enabling
+                easier analysis and tracking. This includes charts, graphs, and other visual tools
+                that make it simple to understand the distribution, performance, and impact of
+                government schemes.
+              </Typography>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </Container>
 
-    {/* <Menu/> */}
-    </>
-  )
-    
+      {/* Onboarding Steps */}
+      <Box sx={{ mt: 5 }}>
+        <motion.div
+          initial={{ y: 50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.6 }}
+        >
+          <OnboardingSteps />
+        </motion.div>
+      </Box>
+      <AboutMahitiSetu/>
+    </div>
+  );
 }
-
-export default Home

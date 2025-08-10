@@ -1,36 +1,83 @@
 import React from 'react';
 import '../css/OnboardingSteps.css';
-import regIcon from '../assets/Accessibility.png';
-// import signupIcon from '../assets/signup.png';
-// import requestIcon from '../assets/request.png';
-// import dashboardIcon from '../assets/dashboard.png';
+import { Card, Typography, Box } from '@mui/material';
+import { motion } from 'framer-motion';
+
+// Material UI Icons
+import HowToRegIcon from '@mui/icons-material/HowToReg';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
+import DashboardIcon from '@mui/icons-material/Dashboard';
 
 const steps = [
-  { id: 1, title: "Registration", step: "STEP 1", icon: regIcon },
-  { id: 2, title: "Sign Up", step: "STEP 2", icon: regIcon },
-  { id: 3, title: "Service Request", step: "STEP 3", icon: regIcon },
-  { id: 4, title: "Dashboard", step: "STEP 4", icon: regIcon }
+  { id: 1, title: "Registration", step: "STEP 1", icon: <HowToRegIcon fontSize="large" color="primary" /> },
+  { id: 2, title: "Sign Up", step: "STEP 2", icon: <PersonAddIcon fontSize="large" color="primary" /> },
+  { id: 3, title: "Service Request", step: "STEP 3", icon: <AssignmentTurnedInIcon fontSize="large" color="primary" /> },
+  { id: 4, title: "Dashboard", step: "STEP 4", icon: <DashboardIcon fontSize="large" color="primary" /> }
 ];
 
 const OnboardingSteps = () => {
   return (
-    <div className="onboarding-container">
-      <h2 className="onboarding-title">
-        On-Boarding <span>Procedure</span>
-      </h2>
+    <Box className="onboarding-container" sx={{ textAlign: 'center', py: 5 }}>
+      <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
+        On-Boarding <span style={{ color: '#1976d2' }}>Procedure</span>
+      </Typography>
 
-      <div className="steps-wrapper">
+      <Box
+        className="steps-wrapper"
+        sx={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+          gap: 3,
+          mt: 4
+        }}
+      >
         {steps.map((item, index) => (
-          <div className="step-card" key={item.id}>
-            <p className="step-number">{item.step}</p>
-            <div className="circle-icon">
-              <img src={item.icon} alt={item.title} />
-            </div>
-            <p className="step-label">{item.title}</p>
-          </div>
+          <motion.div
+            key={item.id}
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.2, duration: 0.5 }}
+          >
+            <Card
+              sx={{
+                width: 200,
+                borderRadius: 3,
+                textAlign: 'center',
+                p: 2,
+                boxShadow: 4,
+                transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                '&:hover': {
+                  transform: 'translateY(-5px)',
+                  boxShadow: 6
+                }
+              }}
+            >
+              <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#888' }}>
+                {item.step}
+              </Typography>
+              <Box
+                sx={{
+                  width: 70,
+                  height: 70,
+                  borderRadius: '50%',
+                  backgroundColor: '#e3f2fd',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  mx: 'auto',
+                  my: 2
+                }}
+              >
+                {item.icon}
+              </Box>
+              <Typography variant="h6">{item.title}</Typography>
+            </Card>
+          </motion.div>
         ))}
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 };
 
