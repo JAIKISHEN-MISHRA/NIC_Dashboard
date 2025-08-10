@@ -23,7 +23,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
           <Route path='/Main' element={<MainPage/>}/>
-                    <Route path='/change-password' element={<ChangePassword/>}/>
+          <Route path='/change-password' element={<ChangePassword/>}/>
 
           {/* Protected routes (with Navbar + Sidenav layout) */}
           <Route element={<Layout />}>

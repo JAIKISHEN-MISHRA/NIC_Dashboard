@@ -22,6 +22,7 @@ const NavbarMain = () => {
       <div className="nav-right">
         <img src={img1} alt="Right Icon 1" className="nav-image" />
         <img src={img2} alt="Right Icon 2" className="nav-image" />
+        <button className='button1'>Login</button>
       </div>
     </nav>
   );
