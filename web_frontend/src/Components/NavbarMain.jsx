@@ -8,7 +8,8 @@ import img2 from '../assets/NIC_Preview-1.png';
 
 const NavbarMain = () => {
   const navigate = useNavigate();
-  const isLoggedIn = localStorage.getItem("loggedIn") === "true";
+  // const isLoggedIn = localStorage.getItem("loggedIn") === "true";
+  const isLoggedIn = "true";
 
   const handleLogin = () => {
     navigate("/login");
@@ -33,14 +34,16 @@ const NavbarMain = () => {
           {isLoggedIn && <li><Link to="/AdminRequest">Admin Request</Link></li>}
           {isLoggedIn && <li><Link to="/upload">Upload</Link></li>}
           {isLoggedIn && <li><Link to="/AddScheme">Add Scheme</Link></li>}
+          {isLoggedIn && <li><Link to="/viewdata">Edit Data</Link></li>}
+          {isLoggedIn && <li><Link to="/approval">Approve Data</Link></li>}
+
         </ul>
       </div>
 
       <div className="nav-right">
         {isLoggedIn ? (
           <>
-            <img src={img1} alt="Right Icon 1" className="nav-image" />
-            <img src={img2} alt="Right Icon 2" className="nav-image" />
+            
             <Button 
               variant="contained" 
               color="error" 
