@@ -1,5 +1,4 @@
-// File: src/pages/Dashboard.jsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   getStates,
   getDivisions,
@@ -8,18 +7,12 @@ import {
   fetchSchemes,
   getDashboardData,
   getTimeSeriesData,
-  fetchSchemes2
 } from "../services/api";
 import Charts from "../Components/Charts";
-import {
-  Box,
-  Button,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Typography,
-} from "@mui/material";
+import { Box, Typography, Grid, Skeleton } from "@mui/material";
+import WelcomeBanner from "../Components/WelcomeBanner";
+import FilterPanel from "../Components/FilterPanel";
+import EmptyState from "../Components/EmptyState";
 
 export default function Dashboard() {
   const [states, setStates] = useState([]);
@@ -35,7 +28,6 @@ export default function Dashboard() {
   const [selectedScheme, setSelectedScheme] = useState("");
   const [year, setYear] = useState("");
   const [month, setMonth] = useState("");
-
   const [dashboardData, setDashboardData] = useState(null);
   const [timeSeriesData, setTimeSeriesData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -45,54 +37,46 @@ export default function Dashboard() {
   const years = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i);
   const months = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
 
+  // Fetch initial data
   useEffect(() => {
-    fetchSchemes().then((res) => res.data && setSchemes(res.data));
-    getStates().then((res) => res.data && setStates(res.data));
+    setLoading(true);
+    Promise.all([fetchSchemes(), getStates()])
+      .then(([schemeRes, stateRes]) => {
+        setSchemes(schemeRes?.data || []);
+        setStates(stateRes?.data || []);
+      })
+      .catch(() => setError("Failed to load initial data."))
+      .finally(() => setLoading(false));
   }, []);
 
-
-
-  // 
-   useEffect(()=>{
-    const response=fetchSchemes2
-    console.log(response)
-   })
-  // 
-
   useEffect(() => {
-    if (selectedState) {
-      getDivisions(selectedState).then((res) => {
-        setDivisions(res.data || []);
-        setSelectedDivision("");
-        setDistricts([]);
-        setSelectedDistrict("");
-        setTalukas([]);
-        setSelectedTaluka("");
-      });
-    }
+    if (!selectedState) return;
+    getDivisions(selectedState).then((res) => {
+      setDivisions(res.data || []);
+      setSelectedDivision("");
+      setDistricts([]);
+      setTalukas([]);
+    });
   }, [selectedState]);
 
   useEffect(() => {
-    if (selectedDivision) {
-      getDistricts(selectedState, selectedDivision).then((res) => {
-        setDistricts(res.data || []);
-        setSelectedDistrict("");
-        setTalukas([]);
-        setSelectedTaluka("");
-      });
-    }
-  }, [selectedDivision]);
+    if (!selectedDivision) return;
+    getDistricts(selectedState, selectedDivision).then((res) => {
+      setDistricts(res.data || []);
+      setSelectedDistrict("");
+      setTalukas([]);
+    });
+  }, [selectedDivision, selectedState]);
 
   useEffect(() => {
-    if (selectedDistrict) {
-      getTalukas(selectedState, selectedDivision, selectedDistrict).then((res) => {
-        setTalukas(res.data || []);
-        setSelectedTaluka("");
-      });
-    }
-  }, [selectedDistrict]);
+    if (!selectedDistrict) return;
+    getTalukas(selectedState, selectedDivision, selectedDistrict).then((res) => {
+      setTalukas(res.data || []);
+      setSelectedTaluka("");
+    });
+  }, [selectedDistrict, selectedDivision, selectedState]);
 
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     if (!selectedScheme || !selectedState) {
       alert("Please select at least Scheme and State.");
       return;
@@ -100,37 +84,41 @@ export default function Dashboard() {
 
     setLoading(true);
     setError("");
-
     try {
-      if (isTimeSeries) {
-        const res = await getTimeSeriesData({
-          scheme_code: selectedScheme,
-          state_code: selectedState,
-          division_code: selectedDivision,
-          district_code: selectedDistrict,
-          taluka_code: selectedTaluka,
-        });
-        setTimeSeriesData(res.data);
-        console.log(res.data)
-      } else {
-        const res = await getDashboardData({
-          scheme_code: selectedScheme,
-          state_code: selectedState,
-          division_code: selectedDivision,
-          district_code: selectedDistrict,
-          taluka_code: selectedTaluka,
-          year,
-          month,
-        });
-        setDashboardData(res.data);
-        console.log(res.data);
-      }
-    } catch (err) {
+      const res = isTimeSeries
+        ? await getTimeSeriesData({
+            scheme_code: selectedScheme,
+            state_code: selectedState,
+            division_code: selectedDivision,
+            district_code: selectedDistrict,
+            taluka_code: selectedTaluka,
+          })
+        : await getDashboardData({
+            scheme_code: selectedScheme,
+            state_code: selectedState,
+            division_code: selectedDivision,
+            district_code: selectedDistrict,
+            taluka_code: selectedTaluka,
+            year,
+            month,
+          });
+
+      isTimeSeries ? setTimeSeriesData(res.data) : setDashboardData(res.data);
+    } catch {
       setError("Failed to fetch dashboard data.");
     } finally {
       setLoading(false);
     }
-  };
+  }, [
+    selectedScheme,
+    selectedState,
+    selectedDivision,
+    selectedDistrict,
+    selectedTaluka,
+    year,
+    month,
+    isTimeSeries,
+  ]);
 
   const dropdowns = [
     {
@@ -182,46 +170,34 @@ export default function Dashboard() {
 
   return (
     <Box p={3}>
-      <Box display="flex" gap={2} flexWrap="wrap" mb={3}>
-        {dropdowns.map(({ label, value, onChange, options, disabled = false }) => (
-          <FormControl key={label} disabled={disabled} sx={{ minWidth: 140 }}>
-            {/* <InputLabel>{label}</InputLabel> */}
-            <Select value={value} onChange={(e) => onChange(e.target.value)} displayEmpty>
-              <MenuItem value="">Select {label}</MenuItem>
-              {options.map((opt) => (
-                <MenuItem key={opt.value} value={opt.value}>
-                  {opt.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        ))}
+      <WelcomeBanner />
+      <FilterPanel
+        dropdowns={dropdowns}
+        isTimeSeries={isTimeSeries}
+        setIsTimeSeries={setIsTimeSeries}
+        handleSubmit={handleSubmit}
+        loading={loading}
+      />
 
-        <FormControl sx={{ minWidth: 180 }}>
-          <InputLabel>View Mode</InputLabel>
-          <Select
-            value={isTimeSeries ? "time" : "summary"}
-            onChange={(e) => {
-              setIsTimeSeries(e.target.value === "time");
-              setDashboardData(null);
-              setTimeSeriesData(null);
-            }}
-          >
-            <MenuItem value="summary">Summary View</MenuItem>
-            <MenuItem value="time">Time Series View</MenuItem>
-          </Select>
-        </FormControl>
-
-        <Button variant="contained" onClick={handleSubmit}>
-          Show Charts
-        </Button>
-      </Box>
-
-      {loading && <Typography>Loading...</Typography>}
       {error && <Typography color="error">{error}</Typography>}
+      {loading && (
+        <Grid container spacing={2}>
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Grid item xs={12} md={4} key={i}>
+              <Skeleton variant="rectangular" height={200} />
+            </Grid>
+          ))}
+        </Grid>
+      )}
 
-      {!isTimeSeries && dashboardData && <Charts data={dashboardData} />}
-      {isTimeSeries && timeSeriesData && <Charts timeSeries data={timeSeriesData} />}
+      {!loading && !error && (
+        <>
+          {!isTimeSeries && dashboardData && <Charts data={dashboardData} />}
+          {isTimeSeries && timeSeriesData && <Charts timeSeries data={timeSeriesData} />}
+
+          {!dashboardData && !timeSeriesData && <EmptyState />}
+        </>
+      )}
     </Box>
   );
 }

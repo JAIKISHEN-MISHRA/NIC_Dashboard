@@ -237,7 +237,6 @@ export default function Sidenav() {
   const navigate = useNavigate();
   const open = useAppStore((state) => state.dopen);
   const isLoggedIn = "false";
-
   const navItems = [
     { text: 'Home', icon: <HomeIcon />, path: '/' },
     ...(isLoggedIn

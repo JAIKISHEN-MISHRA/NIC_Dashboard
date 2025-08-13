@@ -36,6 +36,9 @@ export default function Upload() {
   const [talukas, setTalukas] = useState([]);
   const [schemes, setSchemes] = useState([]);
   const [schemeStructure, setSchemeStructure] = useState([]);
+  const fulluser = JSON.parse(localStorage.getItem('full_user') || '{}');
+const { user_code, user_level_code,role_code, division_code: user_division_code } = fulluser;
+
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -137,10 +140,14 @@ value={getNestedValue(formData.data, key) ?? ""}
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const payload = {
-      ...formData,
-      data: formData.data,
-    };
+     const payload = {
+    ...formData,
+    data: formData.data,
+    user_code,
+    role_code,
+    user_level_code,
+   user_division_code
+  };
 
     const { data, error } = await uploadSchemeData(payload);
     if (error) toast.error("Upload failed");
