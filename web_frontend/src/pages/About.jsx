@@ -62,4 +62,8 @@ const About = () => {
   );
 };
 
+<<<<<<< Updated upstream
 export default About;
+=======
+export default About;
+>>>>>>> Stashed changes
