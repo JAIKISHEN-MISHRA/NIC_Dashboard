@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { toast } from "react-toastify";
 import "../css/SignUp.css";
 import {
@@ -6,11 +7,12 @@ import {
   getDivisions,
   getDistricts,
   getTalukas,
+  getDepartments,
+  getMinistry,
   submitSignup,
 } from "../services/api";
 import SHA256 from "crypto-js/sha256";
 import { Link } from "react-router-dom";
-
 
 export default function SignUp() {
   const [formData, setFormData] = useState({
@@ -26,6 +28,7 @@ export default function SignUp() {
     district: "",
     taluka: "",
     department: "",
+    ministry:""
   });
 
   // option lists
@@ -33,11 +36,28 @@ export default function SignUp() {
   const [divisions, setDivisions] = useState([]);
   const [districts, setDistricts] = useState([]);
   const [talukas, setTalukas] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const [ministry, setMinistry] = useState([]);
 
   // UI / validation
-  const [onboardMode, setOnboardMode] = useState("location");
+  const [onboardMode, setOnboardMode] = useState("location"); // "location" = State, "department" = Central
   const [passwordMatch, setPasswordMatch] = useState(true);
   const [passwordStrength, setPasswordStrength] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  // loading flags
+  const [loadingStates, setLoadingStates] = useState(false);
+  const [loadingDivisions, setLoadingDivisions] = useState(false);
+  const [loadingDistricts, setLoadingDistricts] = useState(false);
+  const [loadingTalukas, setLoadingTalukas] = useState(false);
+  const [loadingDepartment, setLoadingDepartments] = useState(false);
+  const [loadingMinistry, setLoadingMinistry] = useState(false);
+
+  const [stateOption, setStateOption] = useState(""); // "division" or "department"
+
+
+  const [submitting, setSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
@@ -50,7 +70,7 @@ export default function SignUp() {
 
   const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/;
 
-  // Fetch helpers (memoized)
+  // Fetch helpers
   const fetchDivisions = useCallback(async (stateCode) => {
     if (!stateCode) return;
     setLoadingDivisions(true);
@@ -60,6 +80,28 @@ export default function SignUp() {
     else {
       setDivisions([]);
       toast.error("Failed to load divisions.");
+    }
+  }, []);
+
+  const fetchMinistry = useCallback(async () => {
+    //  return;
+    setLoadingMinistry(true);
+    const { data, error } = await getMinistry();
+    setLoadingMinistry(false);
+    if (data) setMinistry(data);
+    else toast.error("Failed to load states.");
+
+  }, []);
+
+  const fetchDepartment = useCallback(async (stateCode) => {
+    if (!stateCode) return;
+    setLoadingDepartments(true);
+    const { data, error } = await getDepartments(stateCode);
+    setLoadingDepartments(false);
+    if (data) setDepartments(data);
+    else {
+      setDepartments([]);
+      toast.error("Failed to load department.");
     }
   }, []);
 
@@ -75,19 +117,26 @@ export default function SignUp() {
     }
   }, []);
 
-  const fetchTalukas = useCallback(async (stateCode, divisionCode, districtCode) => {
-    if (!stateCode || !divisionCode || !districtCode) return;
-    setLoadingTalukas(true);
-    const { data, error } = await getTalukas(stateCode, divisionCode, districtCode);
-    setLoadingTalukas(false);
-    if (data) setTalukas(data);
-    else {
-      setTalukas([]);
-      toast.error("Failed to load talukas.");
-    }
-  }, []);
+  const fetchTalukas = useCallback(
+    async (stateCode, divisionCode, districtCode) => {
+      if (!stateCode || !divisionCode || !districtCode) return;
+      setLoadingTalukas(true);
+      const { data, error } = await getTalukas(
+        stateCode,
+        divisionCode,
+        districtCode
+      );
+      setLoadingTalukas(false);
+      if (data) setTalukas(data);
+      else {
+        setTalukas([]);
+        toast.error("Failed to load talukas.");
+      }
+    },
+    []
+  );
 
-  // load states on mount
+  // Load states on mount
   useEffect(() => {
     (async () => {
       setLoadingStates(true);
@@ -98,14 +147,27 @@ export default function SignUp() {
     })();
   }, []);
 
-  // unified change handler with cascading logic preserved
+  useEffect(() => {
+  if (onboardMode === "ministry") {
+    fetchMinistry(); // no need to pass anything
+  }
+}, [onboardMode, fetchMinistry]);
+
+
+  // useEffect(() => {
+  //   if (onboardMode === "ministry" && formData.ministry) {
+  //     fetchMinistry(formData.ministry);
+  //   }
+  // }, [onboardMode, formData.state, fetchMinistry]);
+
+  // Unified change handler
   const handleChange = (e) => {
     const { name, value } = e.target;
 
     setFormData((prev) => {
       const updated = { ...prev, [name]: value };
 
-      // password validations (live)
+      // password validations
       if (name === "password") {
         setPasswordStrength(passwordRegex.test(value));
         setPasswordMatch(value === prev.confirmPassword);
@@ -114,7 +176,7 @@ export default function SignUp() {
         setPasswordMatch(prev.password === value);
       }
 
-      // cascade resets & fetches
+      // STATE change
       if (name === "state") {
         updated.division = "";
         updated.district = "";
@@ -123,9 +185,21 @@ export default function SignUp() {
         setDivisions([]);
         setDistricts([]);
         setTalukas([]);
-        if (value) fetchDivisions(value);
+        setDepartments([]);
+
+        
+  if (value) {
+    if (onboardMode === "location") {
+      fetchDivisions(value);     // fetch divisions
+      fetchDepartment(value);    // also fetch departments
+    } else if (onboardMode === "ministry") {
+  fetchMinistry();
+}
+
+  }
       }
 
+      // DIVISION change
       if (name === "division") {
         updated.district = "";
         updated.taluka = "";
@@ -135,6 +209,7 @@ export default function SignUp() {
         if (value) fetchDistricts(prev.state, value);
       }
 
+      // DISTRICT change
       if (name === "district") {
         updated.taluka = "";
         updated.department = "";
@@ -142,8 +217,8 @@ export default function SignUp() {
         if (value) fetchTalukas(prev.state, prev.division, value);
       }
 
+      // DEPARTMENT change
       if (name === "department") {
-        // when department is entered, clear location fields
         updated.division = "";
         updated.district = "";
         updated.taluka = "";
@@ -151,6 +226,23 @@ export default function SignUp() {
         setDistricts([]);
         setTalukas([]);
       }
+
+      if (name === "ministry") {
+  setFormData((prev) => ({
+    ...prev,
+    ministry: value,
+    division: "",
+    district: "",
+    taluka: "",
+    department: ""
+  }));
+  setDivisions([]);
+  setDistricts([]);
+  setTalukas([]);
+  setDepartments([]);
+}
+
+
 
       return updated;
     });
@@ -174,6 +266,9 @@ export default function SignUp() {
       return toast.error("Password must include 1 uppercase, 1 digit, 1 special character and be at least 8 characters.");
     }
 
+    if (!passwordMatch) {
+      return toast.error("Passwords do not match.");
+    }
     if (!passwordMatch) {
       return toast.error("Passwords do not match.");
     }
@@ -369,6 +464,237 @@ export default function SignUp() {
           )}
 
           {/* submit */}
+          <div className="form-field full" style={{ marginTop: 8 }}>
+            <button type="submit" className="submit-btn" disabled={!isFormValid}>
+              {submitting ? "Submitting..." : "Sign Up"}
+            </button>
+          </div>
+            <div className="form-field full">
+              <p className="error-text">
+                Password must be 8+ chars, include 1 uppercase, 1 number and 1 special character.
+              </p>
+            </div>
+          )}
+          {!passwordMatch && (
+            <div className="form-field full">
+              <p className="error-text">Passwords do not match.</p>
+            </div>
+          )}
+
+          {/* State + Central/State radio */}
+          <div className="form-row">
+            
+<div className="form-field inline">
+  <label>Onboard as</label>
+  <div className="radio-wrap">
+    <label>
+      <input
+        type="radio"
+        name="onboardMode"
+        value="location"
+        checked={onboardMode === "location"}
+        onChange={() => {
+          setOnboardMode("location");
+          setStateOption(""); // reset inner choice
+        }}
+      />{" "}
+      State
+    </label>
+    <label>
+      <input
+        type="radio"
+        name="onboardMode"
+        value="ministry"
+        checked={onboardMode === "ministry"}
+        onChange={() => {
+          setOnboardMode("ministry");
+          setStateOption(""); // reset inner choice
+        }}
+      />{" "}
+      Central
+    </label>
+  </div>
+</div>
+
+          </div>
+{onboardMode === "location" && (
+  
+  <div className="form-field inline" style={{ marginTop: 8 }}>
+    <div className="form-field inline">
+              <label htmlFor="state">State</label>
+              <select id="state" name="state" value={formData.state} onChange={handleChange}>
+                <option value="">Select State</option>
+                {renderOptions(states, "state_code", "state_name")}
+              </select>
+            </div>
+    <label>Choose Type</label>
+    <div className="radio-wrap">
+      <label>
+        <input
+          type="radio"
+          name="stateOption"
+          value="division"
+          checked={stateOption === "division"}
+          onChange={() => setStateOption("division")}
+        />{" "}
+        Division
+      </label>
+      <label>
+        <input
+          type="radio"
+          name="stateOption"
+          value="department"
+          checked={stateOption === "department"}
+          onChange={() => setStateOption("department")}
+        />{" "}
+        Department
+      </label>
+    </div>
+  </div>
+)}
+{onboardMode === "location" && stateOption === "division" && (
+  <div className="form-row location-row">
+    <div className="form-field inline">
+      <label htmlFor="division">Division</label>
+      <select
+        id="division"
+        name="division"
+        value={formData.division}
+        onChange={handleChange}
+        disabled={!formData.state || loadingDivisions}
+      >
+        <option value="">{loadingDivisions ? "Loading..." : "Select Division"}</option>
+        {renderOptions(divisions, "division_code", "division_name")}
+      </select>
+    </div>
+
+    <div className="form-field inline">
+      <label htmlFor="district">District</label>
+      <select
+        id="district"
+        name="district"
+        value={formData.district}
+        onChange={handleChange}
+        disabled={!formData.division || loadingDistricts}
+      >
+        <option value="">{loadingDistricts ? "Loading..." : "Select District"}</option>
+        {renderOptions(districts, "district_code", "district_name")}
+      </select>
+    </div>
+
+    <div className="form-field inline">
+      <label htmlFor="taluka">Taluka</label>
+      <select
+        id="taluka"
+        name="taluka"
+        value={formData.taluka}
+        onChange={handleChange}
+        disabled={!formData.district || loadingTalukas}
+      >
+        <option value="">{loadingTalukas ? "Loading..." : "Select Taluka"}</option>
+        {renderOptions(talukas, "taluka_code", "taluka_name")}
+      </select>
+    </div>
+  </div>
+)}
+
+{onboardMode === "location" && stateOption === "department" && (
+  <div className="form-field full">
+    <label htmlFor="department">Department <span className="required">*</span></label>
+    <select
+      id="department"
+      name="department"
+      value={formData.department}
+      onChange={handleChange}
+      disabled={!formData.state || loadingDepartment}
+    >
+      <option value="">{loadingDepartment ? "Loading..." : "Select Department"}</option>
+      {renderOptions(departments, "dept_code", "dept_name")}
+    </select>
+  </div>
+)}
+
+{onboardMode === "ministry" && (
+            <div className="form-field full">
+              <label htmlFor="ministry">Ministry <span className="required">*</span></label>
+              <select
+                id="ministry"
+                name="ministry"
+                value={formData.ministry}
+                onChange={handleChange}
+                // disabled={!formData.state || loadingMinistry}
+              >
+                <option value="">{loadingMinistry ? "Loading..." : "Select Ministry"}</option>
+                {renderOptions(ministry, "ministry_code", "ministry_name")}
+              </select>
+            </div>
+          )} 
+
+
+          {/* Conditional fields */}
+          {/* {onboardMode === "department" && (
+            <div className="form-field full">
+              <label htmlFor="department">Department <span className="required">*</span></label>
+              <select
+                id="department"
+                name="department"
+                value={formData.department}
+                onChange={handleChange}
+                disabled={!formData.state || loadingDepartment}
+              >
+                <option value="">{loadingDepartment ? "Loading..." : "Select Department"}</option>
+                {renderOptions(departments, "dept_code", "dept_name")}
+              </select>
+            </div>
+          )} */}
+
+          {/* {onboardMode === "location" && (
+            <div className="form-row location-row">
+              <div className="form-field inline">
+                <label htmlFor="division">Division</label>
+                <select
+                  id="division"
+                  name="division"
+                  value={formData.division}
+                  onChange={handleChange}
+                  disabled={!formData.state || loadingDivisions}
+                >
+                  <option value="">{loadingDivisions ? "Loading..." : "Select Division"}</option>
+                  {renderOptions(divisions, "division_code", "division_name")}
+                </select>
+              </div>
+
+              <div className="form-field inline">
+                <label htmlFor="district">District</label>
+                <select
+                  id="district"
+                  name="district"
+                  value={formData.district}
+                  onChange={handleChange}
+                  disabled={!formData.division || loadingDistricts}
+                >
+                  <option value="">{loadingDistricts ? "Loading..." : "Select District"}</option>
+                  {renderOptions(districts, "district_code", "district_name")}
+                </select>
+              </div>
+
+              <div className="form-field inline">
+                <label htmlFor="taluka">Taluka</label>
+                <select
+                  id="taluka"
+                  name="taluka"
+                  value={formData.taluka}
+                  onChange={handleChange}
+                  disabled={!formData.district || loadingTalukas}
+                >
+                  <option value="">{loadingTalukas ? "Loading..." : "Select Taluka"}</option>
+                  {renderOptions(talukas, "taluka_code", "taluka_name")}
+                </select>
+              </div>
+            </div>
+          )} */}
+
+          {/* Submit */}
           <div className="form-field full" style={{ marginTop: 8 }}>
             <button type="submit" className="submit-btn" disabled={!isFormValid}>
               {submitting ? "Submitting..." : "Sign Up"}
