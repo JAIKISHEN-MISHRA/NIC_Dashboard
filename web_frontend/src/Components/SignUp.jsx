@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { toast } from "react-toastify";
-import "../css/signup.css";
+import "../css/SignUp.css";
 import {
   getStates,
   getDivisions,

@@ -28,6 +28,8 @@ const NavbarMain = () => {
         <ul className="nav-links">
           <li><Link to="/">Home</Link></li>
           <li><Link to="/dashboard">Dashboard</Link></li>
+          <li><Link to="/about">About</Link></li>
+          <li><Link to="/contact">Contact Us</Link></li>
           {isLoggedIn && <li><Link to="/AdminRequest">Admin Request</Link></li>}
           {isLoggedIn && <li><Link to="/upload">Upload</Link></li>}
           {isLoggedIn && <li><Link to="/AddScheme">Add Scheme</Link></li>}

@@ -11,7 +11,9 @@ import Upload from './pages/Upload';
 import AddScheme from './pages/AddScheme';
 import Dashboard from './pages/Dashboard';
 import MainPage from './pages/MainPage';
-import ChangePassword from './pages/ChangePassword';
+import ChangePassword from './pages/ChangePassword'
+import About from "./pages/About";
+import Contact from "./pages/Contact";
 
 function App() {
   return (
@@ -30,6 +32,10 @@ function App() {
             <Route path="upload" element={<Upload />} />
             <Route path="AddScheme" element={<AddScheme />} />
             <Route path="change-password" element={<ChangePassword />} />
+
+             {/* New pages */}
+            <Route path="about" element={<About />} />
+            <Route path="contact" element={<Contact />} />
           </Route>
         </Routes>
       </BrowserRouter>
