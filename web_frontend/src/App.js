@@ -12,6 +12,10 @@ import AddScheme from './pages/AddScheme';
 import Dashboard from './pages/Dashboard';
 import MainPage from './pages/MainPage';
 import ChangePassword from './pages/ChangePassword';
+import ApprovalList from './pages/ApprovalList';
+import SchemeDataPage from './pages/SchemeDataPage';
+import About from './pages/About';
+import Contact from './pages/Contact';
 
 function App() {
   return (
@@ -25,11 +29,15 @@ function App() {
           {/* Routes with MainPage layout */}
           <Route path="/" element={<MainPage />}>
             <Route index element={<Home />} />
+            <Route path='about' element={<About/>}/>
+            <Route path='contact' element={<Contact/>}/>
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="AdminRequest" element={<AdminRequest />} />
             <Route path="upload" element={<Upload />} />
             <Route path="AddScheme" element={<AddScheme />} />
             <Route path="change-password" element={<ChangePassword />} />
+            <Route path='approval' element={<ApprovalList/>}/>
+            <Route path='viewdata' element={<SchemeDataPage/>}/>
           </Route>
         </Routes>
       </BrowserRouter>
