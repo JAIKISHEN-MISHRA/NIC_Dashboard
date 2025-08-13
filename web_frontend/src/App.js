@@ -12,6 +12,8 @@ import AddScheme from './pages/AddScheme';
 import Dashboard from './pages/Dashboard';
 import MainPage from './pages/MainPage';
 import ChangePassword from './pages/ChangePassword';
+import ApprovalList from './pages/ApprovalList';
+import SchemeDataPage from './pages/SchemeDataPage';
 
 function App() {
   return (
@@ -30,6 +32,8 @@ function App() {
             <Route path="upload" element={<Upload />} />
             <Route path="AddScheme" element={<AddScheme />} />
             <Route path="change-password" element={<ChangePassword />} />
+            <Route path='approval' element={<ApprovalList/>}/>
+            <Route path='viewdata' element={<SchemeDataPage/>}/>
           </Route>
         </Routes>
       </BrowserRouter>

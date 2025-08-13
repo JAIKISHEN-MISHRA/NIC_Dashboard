@@ -17,75 +17,73 @@ const safeRequest = async (request) => {
   }
 };
 
-export const submitSignup = async (payload) => {
-  return safeRequest(api.post('/signup', payload));
-};
+// ================= AUTH =================
+export const loginUser = (credentials) =>
+  safeRequest(api.post('/login', credentials));
 
-export const getStates = async () => safeRequest(api.get('/states'));
+export const submitSignup = (payload) =>
+  safeRequest(api.post('/signup', payload));
 
-export const getDivisions = async (stateCode) =>
+export const changePassword = (payload) =>
+  safeRequest(api.post('/change-password', payload));
+
+// ================= LOCATION DATA =================
+export const getStates = () =>
+  safeRequest(api.get('/states'));
+
+export const getDivisions = (stateCode) =>
   safeRequest(api.get(`/divisions/${stateCode}`));
 
-export const getDistricts = async (stateCode, divisionCode) =>
-  safeRequest(api.get(`/districts?state_code=${stateCode}&division_code=${divisionCode}`));
+export const getDistricts = (stateCode, divisionCode) =>
+  safeRequest(api.get(`/districts`, {
+    params: { state_code: stateCode, division_code: divisionCode }
+  }));
 
-export const getTalukas = async (stateCode, divisionCode, districtCode) =>
-  safeRequest(api.get(
-    `/talukas?state_code=${stateCode}&division_code=${divisionCode}&district_code=${districtCode}`
-  ));
+export const getTalukas = (stateCode, divisionCode, districtCode) =>
+  safeRequest(api.get(`/talukas`, {
+    params: { 
+      state_code: stateCode, 
+      division_code: divisionCode, 
+      district_code: districtCode 
+    }
+  }));
 
-export const fetchSchemes = async () => {
-  try {
-    const response = await axios.get(`${BASE_URL}/scheme/list`);
-    console.log(response)
-    return { data: response.data, error: null };
-  } catch (error) {
-    console.error('Error fetching schemes:', error);
-    return { data: null, error };
-  }
-};
+// ================= SCHEMES =================
+export const fetchSchemes = () =>
+  safeRequest(api.get('/scheme/list'));
 
-export const fetchSchemes2 = async () => {
-  try {
-    const response = await axios.get(`${BASE_URL}/scheme/list2`);
-    console.log(response)
-    return { data: response.data, error: null };
-  } catch (error) {
-    console.error('Error fetching schemes:', error);
-    return { data: null, error };
-  }
-};
+export const fetchSchemes2 = () =>
+  safeRequest(api.get('/scheme/list2'));
 
+export const fetchSchemeStructure = (schemeCode) =>
+  safeRequest(api.get(`/scheme/${schemeCode}/categories`));
 
-export const uploadSchemeData = async (payload) => {
-  try {
-    const response = await axios.post(`${BASE_URL}/scheme/data`, payload);
-    return { data: response.data, error: null };
-  } catch (error) {
-    console.error('Error uploading scheme data:', error);
-    return { data: null, error };
-  }
-};
+export const uploadSchemeData = (payload) =>
+  safeRequest(api.post('/scheme/data', payload));
 
-export const fetchSchemeStructure = async (schemeCode) => {
-  try {
-    const res = await axios.get(`http://localhost:5000/api/scheme/${schemeCode}/categories`);
-    return { data: res.data };
-  } catch (error) {
-    console.error('Error fetching scheme structure:', error);
-    return { error };
-  }
-};
-
-export const getDashboardData = async (filters) =>
+// ================= DASHBOARD =================
+export const getDashboardData = (filters) =>
   safeRequest(api.post('/getDashboardData', filters));
 
-export const getTimeSeriesData = (payload) => axios.post(`${BASE_URL}/dashboard/timeseries`, payload);
-export const loginUser = async (credentials) => {
-  return safeRequest(api.post('/login', credentials));
-};
+export const getTimeSeriesData = (payload) =>
+  safeRequest(api.post('/dashboard/timeseries', payload));
 
-export const changePassword = async (payload) => {
-  return safeRequest(api.post('/change-password', payload));
-};
+// ================= APPROVAL =================
+export const fetchApprovalData = (schemeCode) =>
+  safeRequest(api.get(`/scheme/${schemeCode}`));
+
+export const approveData = (id) =>
+  safeRequest(api.post(`/scheme/approval/${id}/approve`));
+
+export const rejectData = (id, remark) =>
+  safeRequest(api.post(`/scheme/approval/${id}/reject`, { remark }));
+
+
+
+
+export const fetchSchemeData = (schemeCode) =>
+  safeRequest(api.get(`/scheme/${schemeCode}/data`));
+
+export const updateSchemeData = (schemeCode, id, data) =>
+  safeRequest(api.put(`/scheme/${schemeCode}/data/${id}`, data));
 
