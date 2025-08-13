@@ -193,7 +193,8 @@ export default function SignUp() {
       const { confirmPassword, ...rest } = formData;
       const payload = { ...rest, password: SHA256(formData.password).toString() };
       const { data, error } = await submitSignup(payload);
-      if (error) toast.error("Signup failed.");
+      console.log(error.response.data.error);
+      if (error) toast.error(error.response.data.error);
       else toast.success("Signup request submitted! Awaiting admin approval.");
     } catch (err) {
       toast.error("Signup failed. Try again.");
