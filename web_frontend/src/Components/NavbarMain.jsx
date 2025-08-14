@@ -8,8 +8,8 @@ import img2 from '../assets/NIC_Preview-1.png';
 
 const NavbarMain = () => {
   const navigate = useNavigate();
-  // const isLoggedIn = localStorage.getItem("loggedIn") === "true";
-  const isLoggedIn = "true";
+  const isLoggedIn = localStorage.getItem("loggedIn") === "true";
+  //const isLoggedIn = "true";
 
   const handleLogin = () => {
     navigate("/login");
@@ -29,8 +29,6 @@ const NavbarMain = () => {
         <ul className="nav-links">
           <li><Link to="/">Home</Link></li>
           <li><Link to="/dashboard">Dashboard</Link></li>
-          <li><Link to="/about">About</Link></li>
-          <li><Link to="/contact">Contact Us</Link></li>
           {isLoggedIn && <li><Link to="/AdminRequest">Admin Request</Link></li>}
           {isLoggedIn && <li><Link to="/upload">Upload</Link></li>}
           {isLoggedIn && <li><Link to="/AddScheme">Add Scheme</Link></li>}

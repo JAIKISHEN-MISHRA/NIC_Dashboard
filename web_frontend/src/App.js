@@ -12,6 +12,10 @@ import AddScheme from './pages/AddScheme';
 import Dashboard from './pages/Dashboard';
 import MainPage from './pages/MainPage';
 import ChangePassword from './pages/ChangePassword';
+import About from "./pages/About";
+import Contact from "./pages/Contact";
+import Help from "./pages/Help";
+
 
 function App() {
   return (
@@ -30,6 +34,10 @@ function App() {
             <Route path="upload" element={<Upload />} />
             <Route path="AddScheme" element={<AddScheme />} />
             <Route path="change-password" element={<ChangePassword />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/help" element={<Help />} />
+            
           </Route>
         </Routes>
       </BrowserRouter>
