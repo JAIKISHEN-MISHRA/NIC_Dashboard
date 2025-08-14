@@ -1,12 +1,10 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@mui/material';
-import { Link, useNavigate } from 'react-router-dom';
-import { Button } from '@mui/material';
+
 import '../css/NavbarMain.css';
 import emblem from '../assets/emblem.png';
 import img1 from '../assets/NIC_Preview-1.png';
-import img2 from '../assets/NIC_Preview-1.png';
 
 const NavbarMain = () => {
   const navigate = useNavigate();

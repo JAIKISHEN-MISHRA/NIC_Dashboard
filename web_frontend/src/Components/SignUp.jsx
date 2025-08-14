@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
-import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { toast } from "react-toastify";
-import "../css/SignUp.css";
+import "../css/signup.css";
+import { Link } from "react-router-dom";
+import SHA256 from "crypto-js/sha256";
 import {
   getStates,
   getDivisions,
@@ -11,8 +12,6 @@ import {
   getMinistry,
   submitSignup,
 } from "../services/api";
-import SHA256 from "crypto-js/sha256";
-import { Link } from "react-router-dom";
 
 export default function SignUp() {
   const [formData, setFormData] = useState({
@@ -28,10 +27,9 @@ export default function SignUp() {
     district: "",
     taluka: "",
     department: "",
-    ministry:""
+    ministry: "",
   });
 
-  // option lists
   const [states, setStates] = useState([]);
   const [divisions, setDivisions] = useState([]);
   const [districts, setDistricts] = useState([]);
@@ -39,33 +37,19 @@ export default function SignUp() {
   const [departments, setDepartments] = useState([]);
   const [ministry, setMinistry] = useState([]);
 
-  // UI / validation
-  const [onboardMode, setOnboardMode] = useState("location"); // "location" = State, "department" = Central
+  const [onboardMode, setOnboardMode] = useState("location");
+  const [stateOption, setStateOption] = useState("");
   const [passwordMatch, setPasswordMatch] = useState(true);
   const [passwordStrength, setPasswordStrength] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  // loading flags
   const [loadingStates, setLoadingStates] = useState(false);
   const [loadingDivisions, setLoadingDivisions] = useState(false);
   const [loadingDistricts, setLoadingDistricts] = useState(false);
   const [loadingTalukas, setLoadingTalukas] = useState(false);
   const [loadingDepartment, setLoadingDepartments] = useState(false);
   const [loadingMinistry, setLoadingMinistry] = useState(false);
-
-  const [stateOption, setStateOption] = useState(""); // "division" or "department"
-
-
-  const [submitting, setSubmitting] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-
-  // loading flags
-  const [loadingStates, setLoadingStates] = useState(false);
-  const [loadingDivisions, setLoadingDivisions] = useState(false);
-  const [loadingDistricts, setLoadingDistricts] = useState(false);
-  const [loadingTalukas, setLoadingTalukas] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/;
@@ -74,100 +58,61 @@ export default function SignUp() {
   const fetchDivisions = useCallback(async (stateCode) => {
     if (!stateCode) return;
     setLoadingDivisions(true);
-    const { data, error } = await getDivisions(stateCode);
+    const { data } = await getDivisions(stateCode);
     setLoadingDivisions(false);
-    if (data) setDivisions(data);
-    else {
-      setDivisions([]);
-      toast.error("Failed to load divisions.");
-    }
-  }, []);
-
-  const fetchMinistry = useCallback(async () => {
-    //  return;
-    setLoadingMinistry(true);
-    const { data, error } = await getMinistry();
-    setLoadingMinistry(false);
-    if (data) setMinistry(data);
-    else toast.error("Failed to load states.");
-
+    data ? setDivisions(data) : toast.error("Failed to load divisions.");
   }, []);
 
   const fetchDepartment = useCallback(async (stateCode) => {
     if (!stateCode) return;
     setLoadingDepartments(true);
-    const { data, error } = await getDepartments(stateCode);
+    const { data } = await getDepartments(stateCode);
     setLoadingDepartments(false);
-    if (data) setDepartments(data);
-    else {
-      setDepartments([]);
-      toast.error("Failed to load department.");
-    }
+    data ? setDepartments(data) : toast.error("Failed to load departments.");
   }, []);
 
   const fetchDistricts = useCallback(async (stateCode, divisionCode) => {
     if (!stateCode || !divisionCode) return;
     setLoadingDistricts(true);
-    const { data, error } = await getDistricts(stateCode, divisionCode);
+    const { data } = await getDistricts(stateCode, divisionCode);
     setLoadingDistricts(false);
-    if (data) setDistricts(data);
-    else {
-      setDistricts([]);
-      toast.error("Failed to load districts.");
-    }
+    data ? setDistricts(data) : toast.error("Failed to load districts.");
   }, []);
 
-  const fetchTalukas = useCallback(
-    async (stateCode, divisionCode, districtCode) => {
-      if (!stateCode || !divisionCode || !districtCode) return;
-      setLoadingTalukas(true);
-      const { data, error } = await getTalukas(
-        stateCode,
-        divisionCode,
-        districtCode
-      );
-      setLoadingTalukas(false);
-      if (data) setTalukas(data);
-      else {
-        setTalukas([]);
-        toast.error("Failed to load talukas.");
-      }
-    },
-    []
-  );
+  const fetchTalukas = useCallback(async (stateCode, divisionCode, districtCode) => {
+    if (!stateCode || !divisionCode || !districtCode) return;
+    setLoadingTalukas(true);
+    const { data } = await getTalukas(stateCode, divisionCode, districtCode);
+    setLoadingTalukas(false);
+    data ? setTalukas(data) : toast.error("Failed to load talukas.");
+  }, []);
 
-  // Load states on mount
+  const fetchMinistry = useCallback(async () => {
+    setLoadingMinistry(true);
+    const { data } = await getMinistry();
+    setLoadingMinistry(false);
+    data ? setMinistry(data) : toast.error("Failed to load ministry.");
+  }, []);
+
   useEffect(() => {
     (async () => {
       setLoadingStates(true);
-      const { data, error } = await getStates();
+      const { data } = await getStates();
       setLoadingStates(false);
-      if (data) setStates(data);
-      else toast.error("Failed to load states.");
+      data ? setStates(data) : toast.error("Failed to load states.");
     })();
   }, []);
 
   useEffect(() => {
-  if (onboardMode === "ministry") {
-    fetchMinistry(); // no need to pass anything
-  }
-}, [onboardMode, fetchMinistry]);
+    if (onboardMode === "ministry") fetchMinistry();
+  }, [onboardMode, fetchMinistry]);
 
-
-  // useEffect(() => {
-  //   if (onboardMode === "ministry" && formData.ministry) {
-  //     fetchMinistry(formData.ministry);
-  //   }
-  // }, [onboardMode, formData.state, fetchMinistry]);
-
-  // Unified change handler
   const handleChange = (e) => {
     const { name, value } = e.target;
 
     setFormData((prev) => {
       const updated = { ...prev, [name]: value };
 
-      // password validations
       if (name === "password") {
         setPasswordStrength(passwordRegex.test(value));
         setPasswordMatch(value === prev.confirmPassword);
@@ -176,111 +121,60 @@ export default function SignUp() {
         setPasswordMatch(prev.password === value);
       }
 
-      // STATE change
+      // Reset dependent selects
       if (name === "state") {
-        updated.division = "";
-        updated.district = "";
-        updated.taluka = "";
-        updated.department = "";
+        updated.division = updated.district = updated.taluka = updated.department = "";
         setDivisions([]);
         setDistricts([]);
         setTalukas([]);
         setDepartments([]);
-
-        
-  if (value) {
-    if (onboardMode === "location") {
-      fetchDivisions(value);     // fetch divisions
-      fetchDepartment(value);    // also fetch departments
-    } else if (onboardMode === "ministry") {
-  fetchMinistry();
-}
-
-  }
+        if (value) {
+          if (onboardMode === "location") {
+            fetchDivisions(value);
+            fetchDepartment(value);
+          } else fetchMinistry();
+        }
       }
 
-      // DIVISION change
       if (name === "division") {
-        updated.district = "";
-        updated.taluka = "";
-        updated.department = "";
+        updated.district = updated.taluka = "";
         setDistricts([]);
         setTalukas([]);
         if (value) fetchDistricts(prev.state, value);
       }
 
-      // DISTRICT change
       if (name === "district") {
         updated.taluka = "";
-        updated.department = "";
         setTalukas([]);
         if (value) fetchTalukas(prev.state, prev.division, value);
       }
 
-      // DEPARTMENT change
-      if (name === "department") {
-        updated.division = "";
-        updated.district = "";
-        updated.taluka = "";
+      if (name === "ministry") {
+        updated.division = updated.district = updated.taluka = updated.department = "";
         setDivisions([]);
         setDistricts([]);
         setTalukas([]);
+        setDepartments([]);
       }
-
-      if (name === "ministry") {
-  setFormData((prev) => ({
-    ...prev,
-    ministry: value,
-    division: "",
-    district: "",
-    taluka: "",
-    department: ""
-  }));
-  setDivisions([]);
-  setDistricts([]);
-  setTalukas([]);
-  setDepartments([]);
-}
-
-
 
       return updated;
     });
   };
 
-  // derived form validity (used to disable submit)
   const isFormValid = useMemo(() => {
     const { fname, email, password, confirmPassword } = formData;
     return !!fname && !!email && !!password && !!confirmPassword && passwordMatch && passwordStrength && !submitting;
   }, [formData, passwordMatch, passwordStrength, submitting]);
 
-  // submit handler (keeps your logic)
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!isFormValid) return toast.error("Please fill all required fields correctly.");
 
-    if (!formData.fname || !formData.email || !formData.password || !formData.confirmPassword) {
-      return toast.error("Please fill all required fields.");
+    if (onboardMode === "department" && !formData.department.trim()) {
+      return toast.error("Please enter Department name.");
     }
-
-    if (!passwordStrength) {
-      return toast.error("Password must include 1 uppercase, 1 digit, 1 special character and be at least 8 characters.");
-    }
-
-    if (!passwordMatch) {
-      return toast.error("Passwords do not match.");
-    }
-    if (!passwordMatch) {
-      return toast.error("Passwords do not match.");
-    }
-
-    if (onboardMode === "department") {
-      if (!formData.department.trim()) {
-        return toast.error("Please enter Department name.");
-      }
-    } else {
-      if (!formData.division || !formData.district || !formData.taluka) {
-        return toast.error("Please select Division, District, and Taluka.");
-      }
+    if (onboardMode === "location" && (!formData.division || !formData.district || !formData.taluka)) {
+      return toast.error("Please select Division, District, and Taluka.");
     }
 
     setSubmitting(true);
@@ -288,27 +182,23 @@ export default function SignUp() {
       const { confirmPassword, ...rest } = formData;
       const payload = { ...rest, password: SHA256(formData.password).toString() };
       const { data, error } = await submitSignup(payload);
-      console.log(error.response.data.error);
-      if (error) toast.error(error.response.data.error);
+      if (error) toast.error(error.response?.data?.error || "Signup failed.");
       else toast.success("Signup request submitted! Awaiting admin approval.");
-    } catch (err) {
+    } catch {
       toast.error("Signup failed. Try again.");
     } finally {
       setSubmitting(false);
     }
   };
 
-  // small helper to render options
   const renderOptions = (list, keyField, labelField) =>
     list.map((i) => <option key={i[keyField]} value={i[keyField]}>{i[labelField]}</option>);
 
   return (
     <div className="container">
-      <div className="header">
+      <header className="header">
         <div className="logo-group">
-          <Link to="/">
-          <img src="/logo.png" alt="India Logo" className="logo" />
-          </Link>
+          <Link to="/"><img src="/logo.png" alt="India Logo" className="logo" /></Link>
           <div className="gov-text">
             <p className="hindi">महाराष्ट्र शासन</p>
             <p className="english">Government of Maharashtra</p>
@@ -319,393 +209,156 @@ export default function SignUp() {
           <span className="lang">A</span>
           <span className="access">🔘</span>
         </div>
-      </div>
+      </header>
 
-<div className="login-box">
+      <main className="login-box">
         <h2 className="login-title">Sign Up</h2>
-
-        {/* FORM: landscape-friendly layout */}
         <form className="form-grid form" onSubmit={handleSubmit}>
 
-          {/* NAMES: first, middle, last in a single row group */}
+          {/* Name Row */}
           <div className="form-row name-row">
-            <div className="form-field inline">
-              <label htmlFor="fname">First name <span className="required">*</span></label>
-              <input id="fname" name="fname" value={formData.fname} onChange={handleChange} required />
-            </div>
-
-            <div className="form-field inline">
-              <label htmlFor="mname">Middle name</label>
-              <input id="mname" name="mname" value={formData.mname} onChange={handleChange} />
-            </div>
-
-            <div className="form-field inline">
-              <label htmlFor="lname">Last name</label>
-              <input id="lname" name="lname" value={formData.lname} onChange={handleChange} />
-            </div>
+            {["fname", "mname", "lname"].map((n) => (
+              <div className="form-field inline" key={n}>
+                <label htmlFor={n}>
+                  {n === "fname" ? "First name" : n === "mname" ? "Middle name" : "Last name"} {n === "fname" && <span className="required">*</span>}
+                </label>
+                <input id={n} name={n} value={formData[n]} onChange={handleChange} required={n === "fname"} />
+              </div>
+            ))}
           </div>
 
-          {/* Contact row: email & mobile */}
+          {/* Contact Row */}
           <div className="form-row contact-row">
             <div className="form-field inline">
               <label htmlFor="email">Email <span className="required">*</span></label>
               <input id="email" type="email" name="email" value={formData.email} onChange={handleChange} required />
             </div>
-
             <div className="form-field inline">
               <label htmlFor="mobile">Mobile</label>
               <input id="mobile" name="mobile" value={formData.mobile} onChange={handleChange} />
             </div>
           </div>
 
-          {/* Password row: password & confirm (side-by-side) */}
+          {/* Password Row */}
           <div className="form-row password-row">
-            <div className="form-field inline">
-              <label htmlFor="password">Password <span className="required">*</span></label>
-              <div className="password-wrap">
-                <input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  required
-                />
-                <button type="button" className="eye-btn" onClick={() => setShowPassword((s) => !s)} aria-label="toggle password">
-                  {showPassword ? "🙈" : "👁️"}
-                </button>
+            {["password", "confirmPassword"].map((p) => (
+              <div className="form-field inline" key={p}>
+                <label htmlFor={p}>{p === "password" ? "Password" : "Confirm Password"} <span className="required">*</span></label>
+                <div className="password-wrap">
+                  <input
+                    id={p}
+                    type={p === "password" ? (showPassword ? "text" : "password") : showConfirm ? "text" : "password"}
+                    name={p}
+                    value={formData[p]}
+                    onChange={handleChange}
+                    required
+                  />
+                  <button type="button" className="eye-btn" onClick={() => p === "password" ? setShowPassword(s => !s) : setShowConfirm(s => !s)}>
+                    {p === "password" ? (showPassword ? "🙈" : "👁️") : showConfirm ? "🙈" : "👁️"}
+                  </button>
+                </div>
               </div>
-            </div>
-
-            <div className="form-field inline">
-              <label htmlFor="confirmPassword">Confirm Password <span className="required">*</span></label>
-              <div className="password-wrap">
-                <input
-                  id="confirmPassword"
-                  type={showConfirm ? "text" : "password"}
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  required
-                />
-                <button type="button" className="eye-btn" onClick={() => setShowConfirm((s) => !s)} aria-label="toggle confirm">
-                  {showConfirm ? "🙈" : "👁️"}
-                </button>
-              </div>
-            </div>
+            ))}
           </div>
 
-          {/* password helper (spans full width) */}
-          {!passwordStrength && (
-            <div className="form-field full">
-              <p className="error-text">Password must be 8+ chars, include 1 uppercase, 1 number and 1 special character.</p>
-            </div>
-          )}
-          {!passwordMatch && (
-            <div className="form-field full">
-              <p className="error-text">Passwords do not match.</p>
-            </div>
-          )}
+          {/* Password Helper */}
+          {!passwordStrength && <p className="error-text full">Password must be 8+ chars, include 1 uppercase, 1 number and 1 special character.</p>}
+          {!passwordMatch && <p className="error-text full">Passwords do not match.</p>}
 
-          {/* State + Mode (state on left, mode radios on right) */}
+          {/* Onboard Mode */}
           <div className="form-row">
-            <div className="form-field inline">
-              <label htmlFor="state">State</label>
-              <select id="state" name="state" value={formData.state} onChange={handleChange}>
-                <option value="">Select State</option>
-                {renderOptions(states, "state_code", "state_name")}
-              </select>
-            </div>
-
             <div className="form-field inline">
               <label>Onboard as</label>
               <div className="radio-wrap">
-                <label><input type="radio" name="onboardMode" value="location" checked={onboardMode === "location"} onChange={() => setOnboardMode("location")} /> Location</label>
-                <label><input type="radio" name="onboardMode" value="department" checked={onboardMode === "department"} onChange={() => setOnboardMode("department")} /> Department</label>
+                {["location", "ministry"].map((mode) => (
+                  <label key={mode}>
+                    <input type="radio" name="onboardMode" value={mode} checked={onboardMode === mode} onChange={() => { setOnboardMode(mode); setStateOption(""); }} />{" "}
+                    {mode === "location" ? "State" : "Central"}
+                  </label>
+                ))}
               </div>
             </div>
           </div>
 
-          {/* department (full) when selected */}
-          {onboardMode === "department" && (
-            <div className="form-field full">
-              <label htmlFor="department">Department <span className="required">*</span></label>
-              <input id="department" name="department" value={formData.department} onChange={handleChange} required />
-            </div>
-          )}
-
-          {/* Location selects (division/district/taluka) — compact row */}
+          {/* Location / Division / Department */}
           {onboardMode === "location" && (
-            <div className="form-row location-row">
-              <div className="form-field inline">
-                <label htmlFor="division">Division</label>
-                <select id="division" name="division" value={formData.division} onChange={handleChange} disabled={!formData.state || loadingDivisions}>
-                  <option value="">{loadingDivisions ? "Loading..." : "Select Division"}</option>
-                  {renderOptions(divisions, "division_code", "division_name")}
-                </select>
+            <>
+              <div className="form-row">
+                <div className="form-field inline">
+                  <label htmlFor="state">State</label>
+                  <select id="state" name="state" value={formData.state} onChange={handleChange}>
+                    <option value="">{loadingStates ? "Loading..." : "Select State"}</option>
+                    {renderOptions(states, "state_code", "state_name")}
+                  </select>
+                </div>
+                <div className="form-field inline">
+                  <label>Choose Type</label>
+                  <div className="radio-wrap">
+                    {["division", "department"].map((opt) => (
+                      <label key={opt}>
+                        <input type="radio" name="stateOption" value={opt} checked={stateOption === opt} onChange={() => setStateOption(opt)} /> {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                      </label>
+                    ))}
+                  </div>
+                </div>
               </div>
 
-              <div className="form-field inline">
-                <label htmlFor="district">District</label>
-                <select id="district" name="district" value={formData.district} onChange={handleChange} disabled={!formData.division || loadingDistricts}>
-                  <option value="">{loadingDistricts ? "Loading..." : "Select District"}</option>
-                  {renderOptions(districts, "district_code", "district_name")}
-                </select>
-              </div>
+              {stateOption === "division" && (
+                <div className="form-row location-row">
+                  {[
+                    { key: "division", list: divisions, loading: loadingDivisions },
+                    { key: "district", list: districts, loading: loadingDistricts },
+                    { key: "taluka", list: talukas, loading: loadingTalukas },
+                  ].map(({ key, list, loading }) => (
+                    <div className="form-field inline" key={key}>
+                      <label htmlFor={key}>{key.charAt(0).toUpperCase() + key.slice(1)}</label>
+                      <select
+                        id={key}
+                        name={key}
+                        value={formData[key]}
+                        onChange={handleChange}
+                        disabled={!formData[key === "division" ? "state" : key === "district" ? "division" : "district"] || loading}
+                      >
+                        <option value="">{loading ? "Loading..." : `Select ${key.charAt(0).toUpperCase() + key.slice(1)}`}</option>
+                        {renderOptions(list, `${key}_code`, `${key}_name`)}
+                      </select>
+                    </div>
+                  ))}
+                </div>
+              )}
 
-              <div className="form-field inline">
-                <label htmlFor="taluka">Taluka</label>
-                <select id="taluka" name="taluka" value={formData.taluka} onChange={handleChange} disabled={!formData.district || loadingTalukas}>
-                  <option value="">{loadingTalukas ? "Loading..." : "Select Taluka"}</option>
-                  {renderOptions(talukas, "taluka_code", "taluka_name")}
-                </select>
-              </div>
-            </div>
+              {stateOption === "department" && (
+                <div className="form-field full">
+                  <label htmlFor="department">Department <span className="required">*</span></label>
+                  <select id="department" name="department" value={formData.department} onChange={handleChange} disabled={!formData.state || loadingDepartment}>
+                    <option value="">{loadingDepartment ? "Loading..." : "Select Department"}</option>
+                    {renderOptions(departments, "dept_code", "dept_name")}
+                  </select>
+                </div>
+              )}
+            </>
           )}
 
-          {/* submit */}
-          <div className="form-field full" style={{ marginTop: 8 }}>
-            <button type="submit" className="submit-btn" disabled={!isFormValid}>
-              {submitting ? "Submitting..." : "Sign Up"}
-            </button>
-          </div>
-            <div className="form-field full">
-              <p className="error-text">
-                Password must be 8+ chars, include 1 uppercase, 1 number and 1 special character.
-              </p>
-            </div>
-          )}
-          {!passwordMatch && (
-            <div className="form-field full">
-              <p className="error-text">Passwords do not match.</p>
-            </div>
-          )}
-
-          {/* State + Central/State radio */}
-          <div className="form-row">
-            
-<div className="form-field inline">
-  <label>Onboard as</label>
-  <div className="radio-wrap">
-    <label>
-      <input
-        type="radio"
-        name="onboardMode"
-        value="location"
-        checked={onboardMode === "location"}
-        onChange={() => {
-          setOnboardMode("location");
-          setStateOption(""); // reset inner choice
-        }}
-      />{" "}
-      State
-    </label>
-    <label>
-      <input
-        type="radio"
-        name="onboardMode"
-        value="ministry"
-        checked={onboardMode === "ministry"}
-        onChange={() => {
-          setOnboardMode("ministry");
-          setStateOption(""); // reset inner choice
-        }}
-      />{" "}
-      Central
-    </label>
-  </div>
-</div>
-
-          </div>
-{onboardMode === "location" && (
-  
-  <div className="form-field inline" style={{ marginTop: 8 }}>
-    <div className="form-field inline">
-              <label htmlFor="state">State</label>
-              <select id="state" name="state" value={formData.state} onChange={handleChange}>
-                <option value="">Select State</option>
-                {renderOptions(states, "state_code", "state_name")}
-              </select>
-            </div>
-    <label>Choose Type</label>
-    <div className="radio-wrap">
-      <label>
-        <input
-          type="radio"
-          name="stateOption"
-          value="division"
-          checked={stateOption === "division"}
-          onChange={() => setStateOption("division")}
-        />{" "}
-        Division
-      </label>
-      <label>
-        <input
-          type="radio"
-          name="stateOption"
-          value="department"
-          checked={stateOption === "department"}
-          onChange={() => setStateOption("department")}
-        />{" "}
-        Department
-      </label>
-    </div>
-  </div>
-)}
-{onboardMode === "location" && stateOption === "division" && (
-  <div className="form-row location-row">
-    <div className="form-field inline">
-      <label htmlFor="division">Division</label>
-      <select
-        id="division"
-        name="division"
-        value={formData.division}
-        onChange={handleChange}
-        disabled={!formData.state || loadingDivisions}
-      >
-        <option value="">{loadingDivisions ? "Loading..." : "Select Division"}</option>
-        {renderOptions(divisions, "division_code", "division_name")}
-      </select>
-    </div>
-
-    <div className="form-field inline">
-      <label htmlFor="district">District</label>
-      <select
-        id="district"
-        name="district"
-        value={formData.district}
-        onChange={handleChange}
-        disabled={!formData.division || loadingDistricts}
-      >
-        <option value="">{loadingDistricts ? "Loading..." : "Select District"}</option>
-        {renderOptions(districts, "district_code", "district_name")}
-      </select>
-    </div>
-
-    <div className="form-field inline">
-      <label htmlFor="taluka">Taluka</label>
-      <select
-        id="taluka"
-        name="taluka"
-        value={formData.taluka}
-        onChange={handleChange}
-        disabled={!formData.district || loadingTalukas}
-      >
-        <option value="">{loadingTalukas ? "Loading..." : "Select Taluka"}</option>
-        {renderOptions(talukas, "taluka_code", "taluka_name")}
-      </select>
-    </div>
-  </div>
-)}
-
-{onboardMode === "location" && stateOption === "department" && (
-  <div className="form-field full">
-    <label htmlFor="department">Department <span className="required">*</span></label>
-    <select
-      id="department"
-      name="department"
-      value={formData.department}
-      onChange={handleChange}
-      disabled={!formData.state || loadingDepartment}
-    >
-      <option value="">{loadingDepartment ? "Loading..." : "Select Department"}</option>
-      {renderOptions(departments, "dept_code", "dept_name")}
-    </select>
-  </div>
-)}
-
-{onboardMode === "ministry" && (
+          {onboardMode === "ministry" && (
             <div className="form-field full">
               <label htmlFor="ministry">Ministry <span className="required">*</span></label>
-              <select
-                id="ministry"
-                name="ministry"
-                value={formData.ministry}
-                onChange={handleChange}
-                // disabled={!formData.state || loadingMinistry}
-              >
+              <select id="ministry" name="ministry" value={formData.ministry} onChange={handleChange}>
                 <option value="">{loadingMinistry ? "Loading..." : "Select Ministry"}</option>
                 {renderOptions(ministry, "ministry_code", "ministry_name")}
               </select>
             </div>
-          )} 
+          )}
 
-
-          {/* Conditional fields */}
-          {/* {onboardMode === "department" && (
-            <div className="form-field full">
-              <label htmlFor="department">Department <span className="required">*</span></label>
-              <select
-                id="department"
-                name="department"
-                value={formData.department}
-                onChange={handleChange}
-                disabled={!formData.state || loadingDepartment}
-              >
-                <option value="">{loadingDepartment ? "Loading..." : "Select Department"}</option>
-                {renderOptions(departments, "dept_code", "dept_name")}
-              </select>
-            </div>
-          )} */}
-
-          {/* {onboardMode === "location" && (
-            <div className="form-row location-row">
-              <div className="form-field inline">
-                <label htmlFor="division">Division</label>
-                <select
-                  id="division"
-                  name="division"
-                  value={formData.division}
-                  onChange={handleChange}
-                  disabled={!formData.state || loadingDivisions}
-                >
-                  <option value="">{loadingDivisions ? "Loading..." : "Select Division"}</option>
-                  {renderOptions(divisions, "division_code", "division_name")}
-                </select>
-              </div>
-
-              <div className="form-field inline">
-                <label htmlFor="district">District</label>
-                <select
-                  id="district"
-                  name="district"
-                  value={formData.district}
-                  onChange={handleChange}
-                  disabled={!formData.division || loadingDistricts}
-                >
-                  <option value="">{loadingDistricts ? "Loading..." : "Select District"}</option>
-                  {renderOptions(districts, "district_code", "district_name")}
-                </select>
-              </div>
-
-              <div className="form-field inline">
-                <label htmlFor="taluka">Taluka</label>
-                <select
-                  id="taluka"
-                  name="taluka"
-                  value={formData.taluka}
-                  onChange={handleChange}
-                  disabled={!formData.district || loadingTalukas}
-                >
-                  <option value="">{loadingTalukas ? "Loading..." : "Select Taluka"}</option>
-                  {renderOptions(talukas, "taluka_code", "taluka_name")}
-                </select>
-              </div>
-            </div>
-          )} */}
-
-          {/* Submit */}
-          <div className="form-field full" style={{ marginTop: 8 }}>
-            <button type="submit" className="submit-btn" disabled={!isFormValid}>
-              {submitting ? "Submitting..." : "Sign Up"}
-            </button>
+          {/* Submit Button */}
+          <div className="form-field full">
+            <button type="submit" className="submit-btn" disabled={!isFormValid}>{submitting ? "Submitting..." : "Sign Up"}</button>
           </div>
         </form>
-      </div>
+      </main>
 
-      <div className="footer">
+      <footer className="footer">
         <img src="/ashok-chakra.png" alt="Ashok Chakra" className="chakra" />
-      </div>
+      </footer>
     </div>
   );
 }

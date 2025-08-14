@@ -9,8 +9,7 @@ import Home from "./pages/Home";
 import AdminRequest from './pages/AdminRequest';
 import Upload from './pages/Upload';
 import AddScheme from './pages/AddScheme';
-import Upload from './pages/Upload';
-import AddScheme from './pages/AddScheme';
+
 import Dashboard from './pages/Dashboard';
 import MainPage from './pages/MainPage';
 import ChangePassword from './pages/ChangePassword';
@@ -36,6 +35,13 @@ function App() {
             <Route path="upload" element={<Upload />} />
             <Route path="AddScheme" element={<AddScheme />} />
             <Route path="change-password" element={<ChangePassword />} />
+            <Route path="approval" element={<ApprovalList/>} />
+            <Route path="viewdata" element={<SchemeDataPage/>} />
+            <Route path="about" element={<About/>} />
+            <Route path="contact" element={<Contact/>} />
+
+
+
           </Route>
         </Routes>
       </BrowserRouter>
