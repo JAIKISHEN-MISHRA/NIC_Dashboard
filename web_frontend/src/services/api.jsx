@@ -30,9 +30,16 @@ export const changePassword = (payload) =>
 // ================= LOCATION DATA =================
 export const getStates = () =>
   safeRequest(api.get('/states'));
+export const getMinistry = async () => safeRequest(api.get('/ministry'));
+
 
 export const getDivisions = (stateCode) =>
   safeRequest(api.get(`/divisions/${stateCode}`));
+
+// aaru
+export const getDepartments = async (stateCode) =>
+  safeRequest(api.get(`/departments/${stateCode}`));
+// 
 
 export const getDistricts = (stateCode, divisionCode) =>
   safeRequest(api.get(`/districts`, {

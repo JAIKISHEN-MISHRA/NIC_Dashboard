@@ -47,3 +47,24 @@ exports.getTalukas = async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch talukas' });
   }
 };
+
+exports.getDepartment = async (req, res) => {
+  const { state_code } = req.params;
+  try {
+    const result = await pool.query('SELECT * FROM get_departments($1);', [state_code]);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching divisions:', err);
+    res.status(500).json({ error: 'Failed to fetch divisions' });
+  }
+};
+
+exports.getMinistry = async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM get_ministry();');
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching states:', err);
+    res.status(500).json({ error: 'Failed to fetch ministry' });
+  }
+};

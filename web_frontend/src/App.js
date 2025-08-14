@@ -9,13 +9,15 @@ import Home from "./pages/Home";
 import AdminRequest from './pages/AdminRequest';
 import Upload from './pages/Upload';
 import AddScheme from './pages/AddScheme';
+
+
+
 import Dashboard from './pages/Dashboard';
 import MainPage from './pages/MainPage';
 import ChangePassword from './pages/ChangePassword';
-import About from "./pages/About";
 import Contact from "./pages/Contact";
+import About from "./pages/About";
 import Help from "./pages/Help";
-
 
 function App() {
   return (
@@ -35,9 +37,10 @@ function App() {
             <Route path="AddScheme" element={<AddScheme />} />
             <Route path="change-password" element={<ChangePassword />} />
             <Route path="/about" element={<About />} />
-            <Route path="/contact" element={<Contact />} />
+            <Route path="contact" element={<Contact />} />
             <Route path="/help" element={<Help />} />
             
+
           </Route>
         </Routes>
       </BrowserRouter>

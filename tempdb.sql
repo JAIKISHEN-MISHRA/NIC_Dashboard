@@ -15,3 +15,17 @@ CREATE TABLE Approval (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE OR REPLACE FUNCTION public.get_departments(p_state_code character varying)
+RETURNS TABLE(dept_code character varying, dept_name character varying)
+LANGUAGE plpgsql
+AS $function$
+BEGIN
+  RETURN QUERY
+  SELECT d.dept_code, d.dept_name
+  FROM m_department d
+  WHERE d.state_code = p_state_code
+    AND d.is_active = TRUE
+  ORDER BY d.dept_name;
+END;
+$function$;
+
