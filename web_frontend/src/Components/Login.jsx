@@ -1,7 +1,7 @@
-import React, { useState, useCallback, useMemo, useRef } from "react";
+import React, { useState, useCallback, useMemo, useRef } from "react"; 
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { loginUser } from "../services/api";
+import { loginUser,updateSuperUserInfo } from "../services/api";
 import CryptoJS from "crypto-js";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import "../css/Login.css";
@@ -17,9 +17,18 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(false);
 
+  const [superUserMode, setSuperUserMode] = useState(false);
+  const [missingFields, setMissingFields] = useState({});
+  const [userCode, setUserCode] = useState(null);
+
   const isDisabled = useMemo(
-    () => !emailOrMobile.trim() || !password.trim() || loading,
-    [emailOrMobile, password, loading]
+    () =>
+      !emailOrMobile.trim() ||
+      !password.trim() ||
+      loading ||
+      (superUserMode &&
+        Object.values(missingFields).some((v) => !v || !v.trim())),
+    [emailOrMobile, password, loading, superUserMode, missingFields]
   );
 
   const handleSubmit = useCallback(
@@ -40,56 +49,91 @@ export default function Login() {
 
         if (error) {
           toast.error(error.message || "Invalid credentials");
-          // trigger shake animation
           if (boxRef.current) {
             boxRef.current.classList.add("shake");
             setTimeout(() => {
               boxRef.current.classList.remove("shake");
             }, 300);
           }
-        } else {
-          const user = data.user;
-          localStorage.setItem("loggedIn", "true");
-          localStorage.setItem("user_code", user.user_code);
-          localStorage.setItem("role_code", user.role_code);
-          localStorage.setItem("user_level_code", user.user_level_code);
-          localStorage.setItem("state_code", user.state_code || "");
-          localStorage.setItem("division_code", user.division_code || "");
-          localStorage.setItem("district_code", user.district_code || "");
-          localStorage.setItem("taluka_code", user.taluka_code || "");
-          localStorage.setItem("department_name", user.department_name || "");
-          localStorage.setItem("full_user", JSON.stringify(user));
-
-          if (data.force_password_change) {
-            toast.info("First login detected. Please change your password.");
-            navigate("/change-password");
-            return;
-          }
-
-          toast.success("Login successful 🎉");
-          setTimeout(() => navigate("/"), 800);
+          return;
         }
-      } catch {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("state_code", data.state_code || "");
+        localStorage.setItem("division_code", data.division_code || "");
+        localStorage.setItem("district_code", data.district_code || "");
+        localStorage.setItem("taluka_code", data.taluka_code || "");
+        localStorage.setItem("force_password_change", data.force_password_change);
+
+        // Check for superuser missing fields
+        if (data.missing_fields && data.missing_fields.length > 0) {
+          const fieldsObj = data.missing_fields.reduce((acc, f) => {
+            acc[f] = "";
+            return acc;
+          }, {});
+          setMissingFields(fieldsObj);
+          setUserCode(data.user_code);
+          setSuperUserMode(true);
+          toast.info("Please fill the missing fields to continue.");
+          return;
+        }
+
+        // Normal login flow
+        
+
+        if (data.force_password_change) {
+          toast.info("First login detected. Please change your password.");
+          navigate("/change-password");
+          return;
+        }
+
+        toast.success("Login successful 🎉");
+        setTimeout(() => navigate("/"), 800);
+      } catch (err) {
+        console.error(err);
         toast.error("Something went wrong, try again.");
       } finally {
         setLoading(false);
-        setTimeout(() => setProgress(false), 400); // hide progress bar after short delay
+        setTimeout(() => setProgress(false), 400);
       }
     },
-    [emailOrMobile, password, navigate]
+    [emailOrMobile, password, navigate, missingFields, superUserMode]
   );
+
+ const handleSuperUserSubmit = async () => {
+  setLoading(true);
+  try {
+    const { data, error } = await updateSuperUserInfo({
+      user_code: userCode,
+      ...missingFields,
+    });
+
+    if (error) {
+      toast.error(error.message || "Failed to update profile. Try again.");
+      return;
+    }
+
+    toast.success("Profile updated successfully. Logging in...");
+    setSuperUserMode(false);
+    setMissingFields({});
+    setPassword(""); // force re-login if needed
+  } catch (err) {
+    console.error(err);
+    toast.error("Something went wrong. Try again.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="container">
-      {/* Progress bar */}
       {progress && <div className="progress-bar"></div>}
 
-      {/* Header */}
       <div className="header">
         <div className="logo-group">
-<Link to="/">
-  <img src="/logo.png" alt="India Logo" className="logo" />
-</Link>          <div className="gov-text">
+          <Link to="/">
+            <img src="/logo.png" alt="India Logo" className="logo" />
+          </Link>
+          <div className="gov-text">
             <p className="hindi">महाराष्ट्र शासन</p>
             <p className="english">Government of Maharashtra</p>
           </div>
@@ -101,86 +145,107 @@ export default function Login() {
         </div>
       </div>
 
-      {/* Login Box */}
       <div ref={boxRef} className="login-box">
-        <h2 className="login-title">Login</h2>
-        <form className="form" onSubmit={handleSubmit}>
-          {/* Username */}
-          <label>
-            Username<span className="required">*</span>
-          </label>
-          <input
-            type="text"
-            placeholder="Enter email or mobile number"
-            value={emailOrMobile}
-            onChange={(e) => setEmailOrMobile(e.target.value)}
-            required
-          />
+        <h2 className="login-title">
+          {superUserMode ? "Complete Superuser Profile" : "Login"}
+        </h2>
 
-          {/* Password */}
-          <label>
-            Password<span className="required">*</span>
-          </label>
-          <div style={{ position: "relative" }}>
-            <input
-              type={showPass ? "text" : "password"}
-              placeholder="Enter password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              style={{ paddingRight: "35px" }}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPass(!showPass)}
-              style={{
-                position: "absolute",
-                right: "10px",
-                top: "50%",
-                transform: "translateY(-50%)",
-                background: "transparent",
-                border: "none",
-                cursor: "pointer",
-                color: "#555",
-              }}
-            >
-              {showPass ? <AiOutlineEyeInvisible /> : <AiOutlineEye />}
-            </button>
-          </div>
+        <form className="form" onSubmit={superUserMode ? (e) => e.preventDefault() : handleSubmit}>
+          {!superUserMode && (
+            <>
+              <label>
+                Username<span className="required">*</span>
+              </label>
+              <input
+                type="text"
+                placeholder="Enter email or mobile number"
+                value={emailOrMobile}
+                onChange={(e) => setEmailOrMobile(e.target.value)}
+                required
+              />
 
-          {/* Forgot password */}
-          <a href="#" className="forgot">Forgot your password?</a>
+              <label>
+                Password<span className="required">*</span>
+              </label>
+              <div style={{ position: "relative" }}>
+                <input
+                  type={showPass ? "text" : "password"}
+                  placeholder="Enter password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  style={{ paddingRight: "35px" }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPass(!showPass)}
+                  style={{
+                    position: "absolute",
+                    right: "10px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    color: "#555",
+                  }}
+                >
+                  {showPass ? <AiOutlineEyeInvisible /> : <AiOutlineEye />}
+                </button>
+              </div>
 
-          {/* Submit button */}
+              <a href="#" className="forgot">Forgot your password?</a>
+            </>
+          )}
+
+          {superUserMode &&
+            Object.keys(missingFields).map((field) => (
+              <div key={field}>
+                <label>
+                  {field.replace("_", " ").toUpperCase()}
+                  <span className="required">*</span>
+                </label>
+                <input
+                  type={field.includes("email") ? "email" : "text"}
+                  value={missingFields[field]}
+                  onChange={(e) =>
+                    setMissingFields((prev) => ({ ...prev, [field]: e.target.value }))
+                  }
+                  required
+                />
+              </div>
+            ))}
+
           <button
-            type="submit"
+            type={superUserMode ? "button" : "submit"}
             className="submit-btn"
             disabled={isDisabled}
+            onClick={superUserMode ? handleSuperUserSubmit : undefined}
           >
-            {loading ? "Logging in..." : "Login"}
+            {loading ? "Processing..." : superUserMode ? "Update Profile" : "Login"}
           </button>
 
-          {/* Signup link */}
-          <div className="signup-link">
-            <p>
-              Don’t have an account?{" "}
-              <span
-                className="create-link"
-                onClick={() => navigate("/signup")}
-                style={{
-                  color: "#007bff",
-                  cursor: "pointer",
-                  textDecoration: "underline",
-                }}
-              >
-                Create one
-              </span>
-            </p>
-          </div>
+          {!superUserMode && (
+            <div className="signup-link">
+              <p>
+                Don’t have an account?{" "}
+                <span
+                  className="create-link"
+                  onClick={() => navigate("/signup")}
+                  style={{
+                    color: "#007bff",
+                    cursor: "pointer",
+                    textDecoration: "underline",
+                  }}
+                >
+                  Create one
+                </span>
+              </p>
+            </div>
+          )}
         </form>
       </div>
 
-      {/* Footer */}
       <div className="footer">
         <img src="/ashok-chakra.png" alt="Ashok Chakra" className="chakra" />
       </div>

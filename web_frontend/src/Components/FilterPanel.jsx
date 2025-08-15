@@ -48,7 +48,7 @@ export default function FilterPanel({ dropdowns, isTimeSeries, setIsTimeSeries, 
           disabled={loading}
           sx={{ borderRadius: 2, px: 3 }}
         >
-          {loading ? "Loading..." : "Show Charts"}
+          {loading ? "Loading..." : ""}
         </Button>
       </Box>
     </Card>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { toast } from "react-toastify";
-import "../css/SignUp.css";
+import "../css/signup.css";
 import { Link } from "react-router-dom";
 import SHA256 from "crypto-js/sha256";
 import {

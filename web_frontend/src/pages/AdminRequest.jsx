@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
 import {
   Box,
   Typography,
@@ -22,8 +21,7 @@ import {
   MenuItem,
 } from '@mui/material';
 import { toast } from 'react-toastify';
-
-const BASE_URL = 'http://localhost:5000/api';
+import { fetchPendingUsers, approveData } from '../services/api';
 
 export default function AdminRequest() {
   const [pendingUsers, setPendingUsers] = useState([]);
@@ -37,35 +35,20 @@ export default function AdminRequest() {
   const [selectedRole, setSelectedRole] = useState('');
   const [selectedLevel, setSelectedLevel] = useState('');
 
-  const fulluser = JSON.parse(localStorage.getItem('full_user') || '{}');
-  const {
-    user_code,
-    role_code,
-    user_level_code,
-    state_code,
-    division_code,
-    district_code,
-  } = fulluser;
-
-  const fetchPendingUsers = async () => {
-    if (role_code === 'VW' || user_level_code === 'DT') return;
-
+  const fetchUsers = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${BASE_URL}/pending-signups`, {
-        params: {
-          page,
-          limit: rowsPerPage,
-          role_code,
-          state_code,
-          division_code,
-        },
+      const { data, error } = await fetchPendingUsers({
+        page,
+        limit: rowsPerPage,
       });
 
-      setPendingUsers(res.data.users || []);
-      setTotal(res.data.total || 0);
-    } catch {
-      toast.error('Failed to fetch pending users');
+      if (error) {
+        toast.error('Failed to fetch pending users');
+      } else {
+        setPendingUsers(data.users || []);
+        setTotal(data.total || 0);
+      }
     } finally {
       setLoading(false);
     }
@@ -78,17 +61,17 @@ export default function AdminRequest() {
     }
 
     try {
-      const res = await axios.post(`${BASE_URL}/approve/${selectedUser.id}`, {
-        approved_by: user_code,
+      const { data, error } = await approveData(selectedUser.id, {
         approved_role_code: selectedRole,
         user_level_code: selectedLevel,
       });
 
-      if (res.data.needsConfirmation) {
+      if (error) {
+        toast.error(error?.response?.data?.error || "Approval failed");
+      } else if (data?.needsConfirmation) {
         const confirmReplace = window.confirm("A user already exists at this level. Replace?");
         if (confirmReplace) {
-          await axios.post(`${BASE_URL}/approve/${selectedUser.id}`, {
-            approved_by: user_code,
+          await approveData(selectedUser.id, {
             approved_role_code: selectedRole,
             user_level_code: selectedLevel,
             forceReplace: true,
@@ -101,9 +84,9 @@ export default function AdminRequest() {
 
       setOpenDialog(false);
       setSelectedUser(null);
-      fetchPendingUsers();
+      fetchUsers();
     } catch (err) {
-      toast.error(err.response?.data?.error || "Approval failed");
+      toast.error(err.message || "Approval failed");
     }
   };
 
@@ -114,7 +97,7 @@ export default function AdminRequest() {
   };
 
   useEffect(() => {
-    fetchPendingUsers();
+    fetchUsers();
   }, [page, rowsPerPage]);
 
   return (
@@ -123,11 +106,7 @@ export default function AdminRequest() {
         Pending Admin Requests
       </Typography>
 
-      {role_code === 'VW' || user_level_code === 'DT' ? (
-        <Typography variant="body1" color="error">
-          You are not authorized to view any requests.
-        </Typography>
-      ) : loading ? (
+      {loading ? (
         <Box textAlign="center" mt={4}>
           <CircularProgress />
         </Box>
