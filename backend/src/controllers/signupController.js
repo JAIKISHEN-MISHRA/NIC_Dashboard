@@ -1,4 +1,6 @@
 const pool = require('../db');
+const jwt = require("jsonwebtoken");
+require("dotenv").config(); // Ensure JWT_SECRET is loaded
 
 
 exports.handleSignup = async (req, res) => {
@@ -52,12 +54,33 @@ exports.handleSignup = async (req, res) => {
 };
 
 exports.getPendingSignups = async (req, res) => {
-  const { role_code, state_code, division_code } = req.query;
+  const {
+    user_code,
+    role_code,
+    user_level_code,
+    state_code,
+    division_code,
+    district_code,
+  } = req.user;
+
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
   const offset = (page - 1) * limit;
 
   try {
+    // ✅ Check if current user is legal
+    const userCheckQuery = `
+      SELECT 1 FROM m_user1
+      WHERE user_code = $1
+        AND is_active = true
+        AND is_assigned = true
+    `;
+    const userCheckRes = await pool.query(userCheckQuery, [user_code]);
+    if (userCheckRes.rowCount === 0) {
+      return res.status(403).json({ error: "User is not authorized" });
+    }
+
+    // ✅ Base query for pending signups
     let baseQuery = `
       SELECT id, fname, mname, lname, email, mobile,
              state_code, division_code, district_code, taluka_code, created_at
@@ -65,27 +88,41 @@ exports.getPendingSignups = async (req, res) => {
       WHERE is_approved = false
     `;
     let countQuery = `SELECT COUNT(*) FROM signup WHERE is_approved = false`;
-    let params = [];
+    const params = [];
 
+    // Apply filters based on role_code and user_level_code
     if (role_code === 'SA') {
-      // no filter
-    } else if (role_code === 'ST') {
-      baseQuery += ` AND state_code = $1`;
-      countQuery += ` AND state_code = $1`;
-      params.push(state_code);
-    } else if (role_code === 'DV') {
-      baseQuery += ` AND division_code = $1`;
-      countQuery += ` AND division_code = $1`;
-      params.push(division_code);
+      if (state_code) {
+        baseQuery += ` AND state_code = $1`;
+        countQuery += ` AND state_code = $1`;
+        params.push(state_code);
+      }
+    } else if (role_code === 'AD') {
+      if (user_level_code === 'ST') {
+        baseQuery += ` AND state_code = $1`;
+        countQuery += ` AND state_code = $1`;
+        params.push(state_code);
+      } else if (user_level_code === 'DV') {
+        baseQuery += ` AND state_code = $1 AND division_code = $2`;
+        countQuery += ` AND state_code = $1 AND division_code = $2`;
+        params.push(state_code, division_code);
+      } else if (user_level_code === 'DT') {
+        baseQuery += ` AND state_code = $1 AND division_code = $2 AND district_code = $3`;
+        countQuery += ` AND state_code = $1 AND division_code = $2 AND district_code = $3`;
+        params.push(state_code, division_code, district_code);
+      } else {
+        return res.json({ users: [], total: 0 });
+      }
     } else {
       return res.json({ users: [], total: 0 });
     }
 
+    // Pagination
     baseQuery += ` ORDER BY created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
     params.push(limit, offset);
 
     const result = await pool.query(baseQuery, params);
-    const countRes = await pool.query(countQuery, params.slice(0, -2)); // just filters
+    const countRes = await pool.query(countQuery, params.slice(0, -2));
 
     const total = parseInt(countRes.rows[0].count);
 
@@ -98,6 +135,7 @@ exports.getPendingSignups = async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch pending signups' });
   }
 };
+
 
 
 // Approve a signup (sets is_approved = true and records approved_by)
@@ -204,11 +242,13 @@ exports.approveSignup = async (req, res) => {
 
 
 
+
 exports.handleLogin = async (req, res) => {
   const { user_name, password } = req.body;
+  const clientIp = req.ip || req.connection.remoteAddress;
 
   if (!user_name || !password) {
-    return res.status(400).json({ error: 'Username and password are required.' });
+    return res.status(400).json({ error: "Username and password are required." });
   }
 
   try {
@@ -218,21 +258,20 @@ exports.handleLogin = async (req, res) => {
     );
 
     if (userResult.rows.length === 0) {
-      return res.status(401).json({ error: 'Invalid username or password.' });
+      return res.status(401).json({ error: "Invalid username or password." });
     }
 
     const user = userResult.rows[0];
 
-    // 🔒 Check if account is locked due to login attempts
+    // 🔒 Account lock check
     if (user.login_attempts >= 3 && user.last_login_timestamp) {
       const lastLoginTime = new Date(user.last_login_timestamp);
-      const now = new Date();
-      const hoursDiff = (now - lastLoginTime) / (1000 * 60 * 60); // in hours
-
+      const hoursDiff = (new Date() - lastLoginTime) / (1000 * 60 * 60);
       if (hoursDiff < 24) {
-        return res.status(403).json({ error: 'Account locked due to multiple failed attempts. Try after 24 hours.' });
+        return res.status(403).json({
+          error: "Account locked due to multiple failed attempts. Try after 24 hours.",
+        });
       } else {
-        // Reset login attempts after 24 hours
         await pool.query(
           `UPDATE m_user1 SET login_attempts = 0 WHERE user_code = $1`,
           [user.user_code]
@@ -241,13 +280,12 @@ exports.handleLogin = async (req, res) => {
     }
 
     if (!user.is_active) {
-      return res.status(403).json({ error: 'Account is inactive. Contact admin.' });
+      return res.status(403).json({ error: "Account is inactive. Contact admin." });
     }
 
-    const isPasswordValid = user.password === password || password === 'NIC@2024';
+    const isPasswordValid = user.password === password;
 
     if (!isPasswordValid) {
-      // ❌ Invalid password → Increment login_attempts and set last_login_timestamp
       await pool.query(
         `UPDATE m_user1
          SET login_attempts = login_attempts + 1,
@@ -255,17 +293,16 @@ exports.handleLogin = async (req, res) => {
          WHERE user_code = $1`,
         [user.user_code]
       );
-
-      return res.status(401).json({ error: 'Invalid username or password.' });
+      return res.status(401).json({ error: "Invalid username or password." });
     }
 
-    // ✅ Password is valid → Reset login_attempts
+    // ✅ Reset login attempts
     await pool.query(
       `UPDATE m_user1 SET login_attempts = 0, last_login_timestamp = NOW() WHERE user_code = $1`,
       [user.user_code]
     );
 
-    // 👇 Prepare user data
+    // 👇 Payload for JWT
     const payload = {
       user_code: user.user_code,
       role_code: user.role_code,
@@ -275,28 +312,62 @@ exports.handleLogin = async (req, res) => {
       district_code: user.district_code,
       taluka_code: user.taluka_code,
       department_name: user.department_name,
-      full_name: `${user.first_name || ''} ${user.middle_name || ''} ${user.last_name || ''}`.trim(),
+      full_name: `${user.first_name || ""} ${user.middle_name || ""} ${user.last_name || ""}`.trim(),
     };
 
-    // ✅ If backdoor password was used, force password change
-    const forcePasswordChange = password === 'NIC@2024';
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "1h" });
 
+    // 🔑 Superuser + default password special case
+    const isSuperUser = user_name.startsWith("Super");
+    const forcePasswordChange = password === process.env.hash;
+
+    if (isSuperUser && forcePasswordChange) {
+      // Send missing fields info for frontend to fill
+      const missingFields = ['mobile_number', 'email_id', 'first_name', 'middle_name', 'last_name'].reduce(
+        (arr, field) => {
+          if (!user[field] || user[field].trim() === '') arr.push(field);
+          return arr;
+        },
+        []
+      );
+
+      return res.status(200).json({
+        message: "Superuser login. Please fill required fields.",
+        token,
+        force_password_change: true,
+        missing_fields: missingFields,
+        user_code: user.user_code,
+      });
+    }
+
+    // Normal login response
     return res.status(200).json({
-      message: 'Login successful',
-      user: payload,
+      message: "Login successful",
+      token,
       force_password_change: forcePasswordChange,
+      state_code: user.state_code,
+      division_code: user.division_code,
+      district_code: user.district_code,
+      taluka_code: user.taluka_code
     });
 
   } catch (err) {
-    console.error('Login error:', err);
-    return res.status(500).json({ error: 'Internal server error' });
+    console.error("Login error:", err);
+    return res.status(500).json({ error: "Internal server error" });
   }
 };
 
+
 exports.handleChangePassword = async (req, res) => {
-  const { user_code, old_password, new_password } = req.body;
+  const { old_password, new_password } = req.body;
+  const { user_code } = req.user; // get user_code from middleware
+
+  if (!old_password || !new_password) {
+    return res.status(400).json({ error: "Old and new passwords are required" });
+  }
 
   try {
+    // Fetch the stored password
     const result = await pool.query(
       `SELECT password FROM m_user1 WHERE user_code = $1 AND is_active = true`,
       [user_code]
@@ -306,21 +377,19 @@ exports.handleChangePassword = async (req, res) => {
       return res.status(401).json({ error: "User not found or inactive" });
     }
 
-    const storedPassword = result.rows[0].password.trim(); // In case NIC@2024 has extra padding
-    const isDefaultPassword = storedPassword === "NIC@2024";
+    const storedPassword = result.rows[0].password.trim();
 
-    const isMatch = isDefaultPassword
-      ? old_password === "NIC@2024"
-      : storedPassword === old_password;
-
-    if (!isMatch) {
+    // Compare old password with stored password
+    if (storedPassword !== old_password) {
       return res.status(403).json({ error: "Old password is incorrect" });
     }
 
+    // Check new password is different
     if (storedPassword === new_password) {
       return res.status(400).json({ error: "New password cannot be the same as the old password" });
     }
 
+    // Update to new password
     await pool.query(
       `UPDATE m_user1 
        SET password = $1, updated_date = CURRENT_TIMESTAMP 
