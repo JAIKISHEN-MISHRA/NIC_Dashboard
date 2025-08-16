@@ -12,6 +12,9 @@ import {
   getMinistry,
   submitSignup,
 } from "../services/api";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faUniversalAccess, faLock, faLockOpen } from "@fortawesome/free-solid-svg-icons";
+import logo from "../assets/emblem.png";
 
 export default function SignUp() {
   const [formData, setFormData] = useState({
@@ -173,7 +176,7 @@ export default function SignUp() {
     if (onboardMode === "department" && !formData.department.trim()) {
       return toast.error("Please enter Department name.");
     }
-    if (onboardMode === "location" && (!formData.division || !formData.district || !formData.taluka)) {
+    if (onboardMode === "location" && stateOption === "division" && (!formData.division || !formData.district || !formData.taluka)) {
       return toast.error("Please select Division, District, and Taluka.");
     }
 
@@ -192,29 +195,35 @@ export default function SignUp() {
   };
 
   const renderOptions = (list, keyField, labelField) =>
-    list.map((i) => <option key={i[keyField]} value={i[keyField]}>{i[labelField]}</option>);
+    list.map((i) => (
+      <option key={i[keyField]} value={i[keyField]}>
+        {i[labelField]}
+      </option>
+    ));
 
   return (
     <div className="container">
       <header className="header">
         <div className="logo-group">
-          <Link to="/"><img src="/logo.png" alt="India Logo" className="logo" /></Link>
+          <Link to="/">
+            <img src={logo} alt="India Logo" className="logo" />
+          </Link>
           <div className="gov-text">
             <p className="hindi">महाराष्ट्र शासन</p>
             <p className="english">Government of Maharashtra</p>
           </div>
         </div>
         <div className="right-controls">
-          <span className="lang">अ</span>
-          <span className="lang">A</span>
-          <span className="access">🔘</span>
+          <span className="lang">अ/A</span>
+          <span className="access">
+            <FontAwesomeIcon icon={faUniversalAccess} size="1x" className="access" />
+          </span>
         </div>
       </header>
 
       <main className="login-box">
         <h2 className="login-title">Sign Up</h2>
         <form className="form-grid form" onSubmit={handleSubmit}>
-
           {/* Name Row */}
           <div className="form-row name-row">
             {["fname", "mname", "lname"].map((n) => (
@@ -270,75 +279,77 @@ export default function SignUp() {
             <div className="form-field inline">
               <label>Onboard as</label>
               <div className="radio-wrap">
-                {["location", "ministry"].map((mode) => (
-                  <label key={mode}>
-                    <input type="radio" name="onboardMode" value={mode} checked={onboardMode === mode} onChange={() => { setOnboardMode(mode); setStateOption(""); }} />{" "}
-                    {mode === "location" ? "State" : "Central"}
-                  </label>
-                ))}
+                <label>
+                  <input type="radio" name="onboardMode" value="location" checked={onboardMode === "location"} onChange={() => { setOnboardMode("location"); setStateOption(""); }} /> State
+                </label>
+                <label>
+                  <input type="radio" name="onboardMode" value="ministry" checked={onboardMode === "ministry"} onChange={() => { setOnboardMode("ministry"); setStateOption(""); }} /> Central
+                </label>
               </div>
             </div>
           </div>
 
-          {/* Location / Division / Department */}
+          {/* Location flow */}
           {onboardMode === "location" && (
-            <>
-              <div className="form-row">
-                <div className="form-field inline">
-                  <label htmlFor="state">State</label>
-                  <select id="state" name="state" value={formData.state} onChange={handleChange}>
-                    <option value="">{loadingStates ? "Loading..." : "Select State"}</option>
-                    {renderOptions(states, "state_code", "state_name")}
-                  </select>
-                </div>
-                <div className="form-field inline">
-                  <label>Choose Type</label>
-                  <div className="radio-wrap">
-                    {["division", "department"].map((opt) => (
-                      <label key={opt}>
-                        <input type="radio" name="stateOption" value={opt} checked={stateOption === opt} onChange={() => setStateOption(opt)} /> {opt.charAt(0).toUpperCase() + opt.slice(1)}
-                      </label>
-                    ))}
-                  </div>
-                </div>
+            <div className="form-field inline" style={{ marginTop: 8 }}>
+              <div className="form-field inline">
+                <label htmlFor="state">State</label>
+                <select id="state" name="state" value={formData.state} onChange={handleChange}>
+                  <option value="">{loadingStates ? "Loading..." : "Select State"}</option>
+                  {renderOptions(states, "state_code", "state_name")}
+                </select>
               </div>
-
-              {stateOption === "division" && (
-                <div className="form-row location-row">
-                  {[
-                    { key: "division", list: divisions, loading: loadingDivisions },
-                    { key: "district", list: districts, loading: loadingDistricts },
-                    { key: "taluka", list: talukas, loading: loadingTalukas },
-                  ].map(({ key, list, loading }) => (
-                    <div className="form-field inline" key={key}>
-                      <label htmlFor={key}>{key.charAt(0).toUpperCase() + key.slice(1)}</label>
-                      <select
-                        id={key}
-                        name={key}
-                        value={formData[key]}
-                        onChange={handleChange}
-                        disabled={!formData[key === "division" ? "state" : key === "district" ? "division" : "district"] || loading}
-                      >
-                        <option value="">{loading ? "Loading..." : `Select ${key.charAt(0).toUpperCase() + key.slice(1)}`}</option>
-                        {renderOptions(list, `${key}_code`, `${key}_name`)}
-                      </select>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {stateOption === "department" && (
-                <div className="form-field full">
-                  <label htmlFor="department">Department <span className="required">*</span></label>
-                  <select id="department" name="department" value={formData.department} onChange={handleChange} disabled={!formData.state || loadingDepartment}>
-                    <option value="">{loadingDepartment ? "Loading..." : "Select Department"}</option>
-                    {renderOptions(departments, "dept_code", "dept_name")}
-                  </select>
-                </div>
-              )}
-            </>
+              <label>Choose Type</label>
+              <div className="radio-wrap">
+                <label>
+                  <input type="radio" name="stateOption" value="division" checked={stateOption === "division"} onChange={() => setStateOption("division")} /> Division
+                </label>
+                <label>
+                  <input type="radio" name="stateOption" value="department" checked={stateOption === "department"} onChange={() => setStateOption("department")} /> Department
+                </label>
+              </div>
+            </div>
           )}
 
+          {onboardMode === "location" && stateOption === "division" && (
+            <div className="form-row location-row">
+              <div className="form-field inline">
+                <label htmlFor="division">Division</label>
+                <select id="division" name="division" value={formData.division} onChange={handleChange} disabled={!formData.state || loadingDivisions}>
+                  <option value="">{loadingDivisions ? "Loading..." : "Select Division"}</option>
+                  {renderOptions(divisions, "division_code", "division_name")}
+                </select>
+              </div>
+
+              <div className="form-field inline">
+                <label htmlFor="district">District</label>
+                <select id="district" name="district" value={formData.district} onChange={handleChange} disabled={!formData.division || loadingDistricts}>
+                  <option value="">{loadingDistricts ? "Loading..." : "Select District"}</option>
+                  {renderOptions(districts, "district_code", "district_name")}
+                </select>
+              </div>
+
+              <div className="form-field inline">
+                <label htmlFor="taluka">Taluka</label>
+                <select id="taluka" name="taluka" value={formData.taluka} onChange={handleChange} disabled={!formData.district || loadingTalukas}>
+                  <option value="">{loadingTalukas ? "Loading..." : "Select Taluka"}</option>
+                  {renderOptions(talukas, "taluka_code", "taluka_name")}
+                </select>
+              </div>
+            </div>
+          )}
+
+          {onboardMode === "location" && stateOption === "department" && (
+            <div className="form-field full">
+              <label htmlFor="department">Department <span className="required">*</span></label>
+              <select id="department" name="department" value={formData.department} onChange={handleChange} disabled={!formData.state || loadingDepartment}>
+                <option value="">{loadingDepartment ? "Loading..." : "Select Department"}</option>
+                {renderOptions(departments, "dept_code", "dept_name")}
+              </select>
+            </div>
+          )}
+
+          {/* Ministry flow */}
           {onboardMode === "ministry" && (
             <div className="form-field full">
               <label htmlFor="ministry">Ministry <span className="required">*</span></label>

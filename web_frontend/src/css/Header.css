@@ -62,3 +62,9 @@
   height: 40px;
   width: auto;
 }
+.access {
+  font-size: 25px;
+   /* change size as needed */
+  /* color: #333;  */
+  /* optional */
+}

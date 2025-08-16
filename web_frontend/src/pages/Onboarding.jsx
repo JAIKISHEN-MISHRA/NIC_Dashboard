@@ -11,7 +11,7 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 
 const steps = [
   { id: 1, title: "Registration", step: "STEP 1", icon: <HowToRegIcon fontSize="large" color="primary" /> },
-  { id: 2, title: "Sign Up", step: "STEP 2", icon: <PersonAddIcon fontSize="large" color="primary" /> },
+  { id: 2, title: "Onboarding", step: "STEP 2", icon: <PersonAddIcon fontSize="large" color="primary" /> },
   { id: 3, title: "Service Request", step: "STEP 3", icon: <AssignmentTurnedInIcon fontSize="large" color="primary" /> },
   { id: 4, title: "Dashboard", step: "STEP 4", icon: <DashboardIcon fontSize="large" color="primary" /> }
 ];

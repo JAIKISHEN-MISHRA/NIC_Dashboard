@@ -5,8 +5,10 @@ import '../css/MainPage.css';
 import { Container, Typography, Card, CardContent, Box } from '@mui/material';
 import { motion } from 'framer-motion';
 import AboutMahitiSetu from '../Components/AboutMahitiSetu';
+import img from "../assets/4020769.jpg"
 
 export default function Home() {
+  
   return (
     <div>
       {/* Banner Slider */}
@@ -15,27 +17,49 @@ export default function Home() {
       </motion.div>
 
       {/* Dashboard Overview Text */}
-      <Container maxWidth="lg" sx={{ my: 5 }}>
-        <motion.div
-          initial={{ x: -50, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ duration: 0.6 }}
-        >
-          <Card elevation={4} sx={{ borderRadius: 3, p: 2 }}>
-            <CardContent>
-              <Typography variant="h4" gutterBottom color="primary">
-                Dashboard Overview
-              </Typography>
-              <Typography variant="body1" color="text.secondary">
-                The dashboard allows users to view scheme-wise data in a visual format, enabling
-                easier analysis and tracking. This includes charts, graphs, and other visual tools
-                that make it simple to understand the distribution, performance, and impact of
-                government schemes.
-              </Typography>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </Container>
+      <Container
+  maxWidth="lg"
+  sx={{
+    my: 5,
+    backgroundImage:{img}, // put your image path here
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    borderRadius: 3,
+    p: 3,
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+  }}
+>
+  <motion.div
+    initial={{ x: -50, opacity: 0 }}
+    animate={{ x: 0, opacity: 1 }}
+    transition={{ duration: 0.6 }}
+  >
+    <Card
+      elevation={6}
+      sx={{
+        borderRadius: 3,
+        p: 2,
+        backgroundColor: "rgba(255, 255, 255, 0.9)", // white transparency for readability
+        backdropFilter: "blur(6px)",
+      }}
+    >
+      <CardContent>
+        <Typography variant="h4" gutterBottom color="#003366">
+          Dashboard <span style={{ color: "#1976d2" }}>Overview</span>
+        </Typography>
+        <Typography variant="body1" color="text.secondary">
+          The dashboard transforms scheme-wise data into a dynamic visual experience,
+          turning complex numbers into clear, impactful insights. 
+          With interactive charts, intuitive graphs, and rich visual tools, users can effortlessly explore distribution patterns, monitor performance trends, and measure the real impact of government schemes — all at a glance.
+        </Typography>
+      </CardContent>
+    </Card>
+  </motion.div>
+</Container>
+
+
 
       {/* Onboarding Steps */}
       <Box sx={{ mt: 5 }}>

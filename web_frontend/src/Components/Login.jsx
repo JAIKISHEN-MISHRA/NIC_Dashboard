@@ -6,7 +6,11 @@ import CryptoJS from "crypto-js";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import "../css/Login.css";
 import { Link } from "react-router-dom";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+// Import the specific icon
+import { faUniversalAccess } from '@fortawesome/free-solid-svg-icons';
 
+import logo from "../assets/emblem.png"
 export default function Login() {
   const navigate = useNavigate();
   const boxRef = useRef(null);
@@ -130,18 +134,21 @@ export default function Login() {
 
       <div className="header">
         <div className="logo-group">
-          <Link to="/">
-            <img src="/logo.png" alt="India Logo" className="logo" />
-          </Link>
-          <div className="gov-text">
+<Link to="/">
+  <img src={logo} alt="India Logo" className="logo" />
+</Link>          <div className="gov-text">
             <p className="hindi">महाराष्ट्र शासन</p>
             <p className="english">Government of Maharashtra</p>
           </div>
         </div>
         <div className="right-controls">
-          <span className="lang">अ</span>
-          <span className="lang">A</span>
-          <span className="access">🔘</span>
+          <span className="lang">अ/A</span>
+
+          {/* <span className="lang">अ</span>
+          <span className="lang">A</span> */}
+           <FontAwesomeIcon icon={faUniversalAccess} size="1x" className='access'/>
+
+          {/* <span className="access">🔘</span> */}
         </div>
       </div>
 
