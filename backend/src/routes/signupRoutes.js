@@ -7,7 +7,7 @@ const { updateSuperUserInfo } = require('../controllers/schemeController');
 router.post('/signup', handleSignup);
 
 router.get('/pending-signups',verifyToken,checkRole("AD","SA")  ,getPendingSignups);
-router.post('/approve/:id',verifyToken,checkRole("AD") ,approveSignup);
+router.post('/approve/:id',verifyToken,checkRole("AD","SA") ,approveSignup);
 router.post('/login', handleLogin);
 router.post('/change-password',verifyToken,checkRole("AD","SA","DE","VW"),handleChangePassword);
 

@@ -2,6 +2,7 @@ const pool = require('../db');
 const { mergeDeepSum, mergeDeepSumTime } = require('../utils/jsonMerge');
 
 exports.getDashboardData = async (req, res) => {
+  console.log(req.body.params);
   const {
     scheme_code,
     state_code,
@@ -10,7 +11,7 @@ exports.getDashboardData = async (req, res) => {
     taluka_code,
     year,
     month
-  } = req.body;
+  } = req.body.params;
 
   const tableName = `t_${scheme_code}_data`;
 
@@ -61,7 +62,7 @@ exports.getDashboardData = async (req, res) => {
 };
 
 exports.getTimeSeriesData = async (req, res) => {
-  const { scheme_code, state_code, division_code, district_code, taluka_code } = req.body;
+  const { scheme_code, state_code, division_code, district_code, taluka_code } = req.body.params;
 
   const tableName = `t_${scheme_code}_data`;
   const filters = ["is_active = true"]; // Default condition

@@ -201,7 +201,7 @@ export default function Login() {
                 </button>
               </div>
 
-              <a href="#" className="forgot">Forgot your password?</a>
+<Link to="/forgot" className="forgot">Forgot your password?</Link>
             </>
           )}
 

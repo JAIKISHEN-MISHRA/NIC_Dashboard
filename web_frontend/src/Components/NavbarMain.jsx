@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button, IconButton, Menu, MenuItem, Typography } from '@mui/material';
 import AccountCircle from '@mui/icons-material/AccountCircle';
-import {jwtDecode} from 'jwt-decode';
+import {jwtDecode} from 'jwt-decode'; // default import
 
 import '../css/NavbarMain.css';
 import emblem from '../assets/emblem.png';
@@ -30,7 +30,10 @@ const NavbarMain = () => {
   const tokenData = useMemo(() => getTokenData(), []);
   const isLoggedIn = !!tokenData;
   const roleCode = tokenData?.role_code;
-  const name = tokenData?.full_name;
+  const name = tokenData?.full_name || '';
+
+  // compute first name and lower-case it for display
+  const firstName = name ? name.split(' ')[0] : '';
 
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
@@ -61,9 +64,7 @@ const NavbarMain = () => {
             </>
           )}
 
-          {isLoggedIn && ["VW", "AD", "DE", "SA"].includes(roleCode) && (
-            <li><Link to="/admindash">Admin Dashboard</Link></li>
-          )}
+       
 
           {isLoggedIn && (roleCode === "DE" || roleCode === "SA") && (
             <>
@@ -84,10 +85,23 @@ const NavbarMain = () => {
               size="large"
               color="inherit"
               onClick={handleMenuOpen}
-              sx={{ color: 'black' }}
+              sx={{ color: 'black', display: 'flex', alignItems: 'center' }}
             >
               <AccountCircle fontSize="large" />
+              {/* small, lowercase first name next to the icon */}
+              <Typography
+                variant="caption"
+                sx={{
+                  ml: 1,
+                  lineHeight: 1,
+                  fontWeight: 500,
+                  color: 'black'
+                }}
+              >
+                {firstName}
+              </Typography>
             </IconButton>
+
             <Menu
               anchorEl={anchorEl}
               open={open}

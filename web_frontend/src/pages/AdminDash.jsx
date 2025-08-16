@@ -39,10 +39,7 @@ export default function AdminDashboard() {
 
   // Fetch initial data
 useEffect(() => {
-    localStorage.setItem("state_code", "27");
-    localStorage.setItem("division_code","02")
-    localStorage.setItem("district_code","480");
-    localStorage.setItem("taluka_code","4294")
+    
   setLoading(true);
 
   const lsState = localStorage.getItem("state_code") || "";

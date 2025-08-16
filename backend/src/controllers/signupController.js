@@ -315,7 +315,7 @@ exports.handleLogin = async (req, res) => {
       full_name: `${user.first_name || ""} ${user.middle_name || ""} ${user.last_name || ""}`.trim(),
     };
 
-    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "1h" });
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "24h" });
 
     // 🔑 Superuser + default password special case
     const isSuperUser = user_name.startsWith("Super");

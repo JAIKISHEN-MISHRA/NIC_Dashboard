@@ -73,21 +73,32 @@ exports.insertSchemeWithCategories = async (req, res) => {
     state_code,
     division_code = null,
     district_code = null,
-    taluka_code = null
+    taluka_code = null,
+    frequency // Value from request body
   } = req.body;
 
+  // --- Start of Changes ---
+
+  // 1. Added validation for the new frequency field
   if (!scheme_name?.trim()) {
     return res.status(400).json({ error: 'scheme_name is required' });
+  }
+  if (!frequency?.trim()) {
+    return res.status(400).json({ error: 'frequency is required' });
   }
   if (!state_code) {
     return res.status(400).json({ error: 'state_code is required' });
   }
+  
+  // --- End of Changes ---
 
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
 
-    // Always include audit columns
+    // --- Start of Changes ---
+
+    // 2. Added 'frequency' to the columns list
     const cols = [
       'scheme_name',
       'scheme_name_ll',
@@ -95,9 +106,12 @@ exports.insertSchemeWithCategories = async (req, res) => {
       'division_code',
       'district_code',
       'taluka_code',
+      'frequency',
       'insert_by',
       'insert_ip'
     ];
+
+    // 3. Added the frequency variable to the values list
     const values = [
       scheme_name,
       scheme_name_ll,
@@ -105,9 +119,12 @@ exports.insertSchemeWithCategories = async (req, res) => {
       division_code,
       district_code,
       taluka_code,
+      frequency,
       getCurrentUser(req),
       getClientIp(req)
     ];
+    
+    // --- End of Changes ---
 
     const placeholders = cols.map((_, i) => `$${i + 1}`).join(', ');
 
@@ -159,6 +176,7 @@ exports.getSchemeCategoryTree = async (req, res) => {
       return flatList
         .filter(cat => cat.parent_id === parentId)
         .map(cat => ({
+          category_id:cat.category_id,
           category_name: cat.category_name,
           category_name_ll: cat.category_name_ll,
           children: buildTree(cat.category_id)
@@ -230,12 +248,9 @@ exports.getAllSchemes2 = async (req, res) => {
 
 
 // Insert scheme data
-exports.insertSchemeData = async (req, res) => { 
+// Insert scheme data
+exports.insertSchemeData = async (req, res) => {
   const {
-    user_code,
-    user_division_code,
-    user_level_code,
-    role_code,
     division_code,
     scheme_code,
     state_code,
@@ -246,25 +261,69 @@ exports.insertSchemeData = async (req, res) => {
     data,
   } = req.body;
 
+  const {
+    user_code,
+    state_code: user_state_code,
+    division_code: user_division_code,
+    district_code: user_district_code,
+    user_level_code,
+    role_code
+  } = req.user;
+
+  // derive insert metadata
+  const insert_by = getCurrentUser(req);
+  const insert_ip = getClientIp(req);
+
   try {
     // 1️⃣ Validate login data
     if (!user_code || !user_level_code || !division_code) {
       return res.status(401).json({ error: "Please login to upload" });
     }
 
-    // 2️⃣ If user_level_code = DT but role_code = VW → reject
+    // 2️⃣ Validate State access
+    if ((user_level_code === "ST" || user_level_code === "SA") && state_code !== user_state_code) {
+      return res.status(401).json({ error: "User not of same State" });
+    }
+
+    // 3️⃣ If user_level_code = DT but role_code = VW → reject
     if (user_level_code === "DT" && role_code === "VW") {
       return res.status(403).json({ error: "You have viewing rights, not upload rights" });
     }
 
-    // 3️⃣ If user_level_code = DT and role_code = AD → Approval table
-    if (user_level_code === "DT" && role_code === "AD") {
+    // Basic data validation
+    if (data === undefined || data === null) {
+      return res.status(400).json({ error: "data field is required" });
+    }
+    // ensure data is JSON-serializable
+    let jsonData;
+    try {
+      jsonData = typeof data === 'string' ? JSON.parse(data) : data;
+    } catch (e) {
+      // if parsing fails, try to stringify original value
+      try {
+        jsonData = JSON.parse(JSON.stringify(data));
+      } catch (err) {
+        return res.status(400).json({ error: "Invalid data payload; must be JSON" });
+      }
+    }
+
+    // 4️⃣ Validate scheme_code to avoid SQL injection
+    const validScheme = await pool.query(
+      "SELECT scheme_code FROM m_scheme WHERE scheme_code=$1",
+      [scheme_code]
+    );
+    if (validScheme.rowCount === 0) {
+      return res.status(400).json({ error: "Invalid scheme_code" });
+    }
+
+    // 5️⃣ If DT + AD → Insert into Approval table (store insert_by/insert_ip)
+    if (user_level_code === "DT" && role_code === "AD" && district_code === user_district_code) {
       const approvalQuery = `
-        INSERT INTO Approval (
+        INSERT INTO approval (
           user_code, user_division_code, user_level_code, role_code,
           division_code, scheme_code, state_code, district_code, taluka_code,
-          year, month, data, approved_by
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NULL)
+          year, month, data, insert_by, insert_ip, approved_by, created_at, status
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,NULL,NOW(),'PENDING')
         RETURNING id
       `;
 
@@ -280,24 +339,26 @@ exports.insertSchemeData = async (req, res) => {
         taluka_code,
         year,
         month,
-        data
+        JSON.stringify(jsonData),
+        insert_by,
+        insert_ip
       ];
 
       const result = await pool.query(approvalQuery, approvalValues);
       return res.status(200).json({
         message: "Data staged for approval",
-        approval_id: result.rows[0].id
+        inserted_id: result.rows[0].id
       });
     }
 
-    // 4️⃣ Default → Direct insert into scheme-specific table
+    // 6️⃣ Default → Direct insert into scheme-specific table (include insert_by/insert_ip)
     const tableName = `t_${scheme_code}_data`;
 
     const insertQuery = `
       INSERT INTO ${tableName} (
         state_code, division_code, district_code, taluka_code,
-        year, month, data
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+        year, month, data, insert_by, insert_ip
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
       RETURNING id
     `;
 
@@ -308,13 +369,15 @@ exports.insertSchemeData = async (req, res) => {
       taluka_code,
       year,
       month,
-      data
+      JSON.stringify(jsonData),
+      insert_by,
+      insert_ip
     ];
 
     const result = await pool.query(insertQuery, values);
     res.status(200).json({
       message: "Data inserted",
-      id: result.rows[0].id
+      inserted_id: result.rows[0].id
     });
 
   } catch (error) {
@@ -322,6 +385,7 @@ exports.insertSchemeData = async (req, res) => {
     res.status(500).json({ error: "Failed to insert data" });
   }
 };
+
 
 
 exports.getPendingApprovals = async (req, res) => {

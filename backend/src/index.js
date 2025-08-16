@@ -16,6 +16,8 @@ const schemeRoutes = require('./routes/schemeRoutes');
 app.use('/api', schemeRoutes);
 const dashboardRoutes = require('./routes/dashboardRoutes');
 app.use('/api', dashboardRoutes);
+const forgotRoutes=require('./routes/forgot');
+app.use('/api',forgotRoutes);
 
 
 // Health check

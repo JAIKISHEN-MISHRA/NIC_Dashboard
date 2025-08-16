@@ -1,10 +1,14 @@
-import './App.css';
+import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 import Login from './Components/Login';
 import SignUp from './Components/SignUp';
+import ForgotPassword from './pages/ForgotPassword';
+import VerifyOTP from './pages/VerifyOTP';
+import ResetPassword from './pages/ResetPassword';
+
 import Home from "./pages/Home";
 import AdminRequest from './pages/AdminRequest';
 import Upload from './pages/Upload';
@@ -20,24 +24,18 @@ import SchemeDataPage from './pages/SchemeDataPage';
 import ApprovalList from './pages/ApprovalList';
 
 function App() {
-  // loggedIn determined by token presence
   const loggedIn = !!localStorage.getItem("token");
-  console.log(loggedIn);
+
+  // PrivateRoute wrapper
   const PrivateRoute = ({ children }) => {
     const location = useLocation();
-
     if (!loggedIn) {
       toast.error("You must be logged in to access this page");
       return <Navigate to="/login" state={{ from: location }} replace />;
     }
-
     return children;
   };
 
-  const DashboardRoute = () =>
-    !loggedIn ? <Dashboard /> : <Navigate to="/admindash" replace />;
-
-  // Centralized route config
   const protectedRoutes = [
     { path: "change-password", element: <ChangePassword /> },
     { path: "AdminRequest", element: <AdminRequest /> },
@@ -52,9 +50,14 @@ function App() {
     <>
       <BrowserRouter>
         <Routes>
-          {/* Public */}
+          {/* Public routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
+
+          {/* Forgot password flow */}
+          <Route path="/forgot" element={<ForgotPassword />} />
+          <Route path="/verify" element={<VerifyOTP />} />
+          <Route path="/reset" element={<ResetPassword />} />
 
           {/* Main layout */}
           <Route path="/" element={<MainPage />}>
@@ -62,7 +65,7 @@ function App() {
             <Route path="about" element={<About />} />
             <Route path="contact" element={<Contact />} />
             <Route path="help" element={<Help />} />
-            <Route path="dashboard" element={<DashboardRoute />} />
+            <Route path="dashboard" element={loggedIn ? <Navigate to="/admindash" replace /> : <Dashboard />} />
 
             {/* Protected routes */}
             {protectedRoutes.map(({ path, element }) => (

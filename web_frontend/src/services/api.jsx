@@ -121,7 +121,7 @@ export const updateSchemeData = (schemeCode, id, data) =>
 
 // ================= DASHBOARD =================
 export const getDashboardData = (filters) =>
-  safeRequest(api.get("/getDashboardData", { params: filters }));
+  safeRequest(api.post("/getDashboardData", { params: filters }));
 
 export const getTimeSeriesData = (payload) =>
-  safeRequest(api.get("/dashboard/timeseries", { params: payload }));
+  safeRequest(api.post("/dashboard/timeseries", { params: payload }));
