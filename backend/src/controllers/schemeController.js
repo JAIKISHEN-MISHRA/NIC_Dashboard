@@ -176,7 +176,7 @@ exports.getSchemeCategoryTree = async (req, res) => {
       return flatList
         .filter(cat => cat.parent_id === parentId)
         .map(cat => ({
-          category_id:cat.category_id,
+          category_id: cat.category_id,
           category_name: cat.category_name,
           category_name_ll: cat.category_name_ll,
           children: buildTree(cat.category_id)
@@ -185,9 +185,9 @@ exports.getSchemeCategoryTree = async (req, res) => {
 
     const tree = buildTree();
 
-    // Fetch location data
+    // Fetch location data + frequency in one query
     const locationResult = await pool.query(
-      `SELECT state_code, division_code, district_code, taluka_code
+      `SELECT state_code, division_code, district_code, taluka_code, frequency
        FROM m_scheme
        WHERE scheme_code = $1
        LIMIT 1`,
@@ -195,8 +195,12 @@ exports.getSchemeCategoryTree = async (req, res) => {
     );
 
     let location = null;
+    let frequency = null;
+
     if (locationResult.rows.length > 0) {
       const loc = locationResult.rows[0];
+
+      // build location object only with available fields
       if (loc.state_code || loc.division_code || loc.district_code || loc.taluka_code) {
         location = {};
         if (loc.state_code) location.state_code = loc.state_code;
@@ -204,12 +208,16 @@ exports.getSchemeCategoryTree = async (req, res) => {
         if (loc.district_code) location.district_code = loc.district_code;
         if (loc.taluka_code) location.taluka_code = loc.taluka_code;
       }
+
+      // return frequency (could be string/null)
+      frequency = loc.frequency ?? null;
     }
 
-    // Always send same structure
+    // Always send same structure plus frequency
     res.json({
       data: tree,
-      location
+      location,
+      frequency
     });
 
   } catch (err) {

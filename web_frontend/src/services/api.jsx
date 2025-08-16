@@ -114,8 +114,27 @@ export const approveData = (id) =>
   safeRequest(api.post(`/scheme/${id}/approve`));
 export const rejectData = (id, remark) =>
   safeRequest(api.post(`/scheme/${id}/reject`, { remark }));
-export const fetchSchemeData = (schemeCode) =>
-  safeRequest(api.get(`/scheme/${schemeCode}/data`));
+export const fetchSchemeData = (
+  schemeCode,
+  stateCode = null,
+  divisionCode = null,
+  districtCode = null,
+  talukaCode = null,
+  year = null,
+  month = null
+) =>
+  safeRequest(
+    api.get(`/scheme/${schemeCode}/data`, {
+      params: {
+        stateCode,
+        divisionCode,
+        districtCode,
+        talukaCode,
+        year,
+        month,
+      },
+    })
+  );
 export const updateSchemeData = (schemeCode, id, data) =>
   safeRequest(api.put(`/scheme/${schemeCode}/data/${id}`, data));
 
