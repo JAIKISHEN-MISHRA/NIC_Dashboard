@@ -21,7 +21,7 @@ import {
   MenuItem,
 } from '@mui/material';
 import { toast } from 'react-toastify';
-import { fetchPendingUsers, approveData } from '../services/api';
+import { fetchPendingUsers, approveSignup } from '../services/api';
 
 export default function AdminRequest() {
   const [pendingUsers, setPendingUsers] = useState([]);
@@ -61,7 +61,7 @@ export default function AdminRequest() {
     }
 
     try {
-      const { data, error } = await approveData(selectedUser.id, {
+      const { data, error } = await approveSignup(selectedUser.id, {
         approved_role_code: selectedRole,
         user_level_code: selectedLevel,
       });
@@ -71,7 +71,7 @@ export default function AdminRequest() {
       } else if (data?.needsConfirmation) {
         const confirmReplace = window.confirm("A user already exists at this level. Replace?");
         if (confirmReplace) {
-          await approveData(selectedUser.id, {
+          await approveSignup(selectedUser.id, {
             approved_role_code: selectedRole,
             user_level_code: selectedLevel,
             forceReplace: true,

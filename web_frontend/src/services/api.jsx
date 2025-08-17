@@ -110,6 +110,8 @@ export const createScheme = (payload) =>
   safeRequest(api.post("/scheme", payload));
 export const fetchApprovalData = (schemeCode) =>
   safeRequest(api.get(`/scheme/${schemeCode}`));
+export const approveSignup = (id, payload) =>
+  safeRequest(api.post(`/approve/${id}`, payload));
 export const approveData = (id) =>
   safeRequest(api.post(`/scheme/${id}/approve`));
 export const rejectData = (id, remark) =>
