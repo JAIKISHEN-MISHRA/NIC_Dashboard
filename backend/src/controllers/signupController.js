@@ -141,13 +141,26 @@ exports.getPendingSignups = async (req, res) => {
 // Approve a signup (sets is_approved = true and records approved_by)
 exports.approveSignup = async (req, res) => {
   const { id } = req.params;
-  const { forceReplace = false, approved_by, approved_role_code, user_level_code } = req.body;
+  // body: forceReplace, approved_role_code, user_level_code
+  const { forceReplace = false, approved_role_code, user_level_code } = req.body;
+
+  // approver info from JWT (req.user)
+  const approver = req.user || {};
+  const approverCode = approver.user_code;
+  const approverRole = approver.role_code;
+  const approverLevel = approver.user_level_code;
+  const approverState = approver.state_code;
+  const approverDivision = approver.division_code;
+  const approverDistrict = approver.district_code;
 
   try {
+    // 0. Basic validation of inputs
+    if (!approved_role_code || !user_level_code) {
+      return res.status(400).json({ error: "approved_role_code and user_level_code required" });
+    }
     // 1. Get signup data
     const result = await pool.query(`SELECT * FROM signup WHERE id = $1`, [id]);
-    if (result.rows.length === 0)
-      return res.status(404).json({ error: "Signup not found" });
+    if (result.rows.length === 0) return res.status(404).json({ error: "Signup not found" });
 
     const signup = result.rows[0];
     const {
@@ -156,7 +169,37 @@ exports.approveSignup = async (req, res) => {
       department
     } = signup;
 
-    // 2. If DT-level, check existing active user
+    // 2. Permission checks: ensure approver is allowed to approve this signup
+    // SA & ST => must be same state
+    if (approverLevel === 'SA' || approverLevel === 'ST') {
+      if (!approverState || approverState !== state_code) {
+        return res.status(403).json({ error: "Not authorized: approver's state must match signup state" });
+      }
+    }
+
+    // DV => must be same division
+    if (approverLevel === 'DV') {
+      if (!approverDivision || approverDivision !== division_code) {
+        return res.status(403).json({ error: "Not authorized: approver's division must match signup division" });
+      }
+    }
+
+    // DT => must be same district AND approver must not be role DE or VW
+    if (approverLevel === 'DT') {
+      if (approverRole === 'DE' || approverRole === 'VW') {
+        return res.status(403).json({ error: "Not authorized: DE or VW cannot approve as DT" });
+      }
+      if (!approverDistrict || approverDistrict !== district_code) {
+        return res.status(403).json({ error: "Not authorized: approver's district must match signup district" });
+      }
+    }
+
+    // Additional rule: approver must not be empty (safety)
+    if (!approverCode) {
+      return res.status(401).json({ error: "Approver information missing" });
+    }
+
+    // 3. If assigning a DT-level user, check for existing active DT admin and handle forceReplace
     if (user_level_code === 'DT') {
       const existing = await pool.query(
         `SELECT * FROM m_user1 WHERE district_code = $1 AND is_active = true AND user_level_code = 'DT'`,
@@ -172,17 +215,18 @@ exports.approveSignup = async (req, res) => {
 
       if (existing.rows.length > 0 && forceReplace) {
         await pool.query(
-          `UPDATE m_user1 SET is_active = false, is_assigned = false 
+          `UPDATE m_user1 SET is_active = true, is_assigned = false 
            WHERE district_code = $1 AND user_level_code = 'DT' AND is_active = true`,
           [district_code]
         );
       }
     }
 
-    // 3. Find pre-seeded unassigned user matching level + location
+    // 4. Find a pre-seeded unassigned user matching level + role + location
+    // Keep original loose matching (NULL or equal) so pre-seeded entries with NULL location can be used.
     const userRes = await pool.query(
       `SELECT * FROM m_user1
-       WHERE is_active = false AND is_assigned = false
+       WHERE is_active = true AND is_assigned = false
          AND role_code = $1 AND user_level_code = $2
          AND (state_code IS NULL OR state_code = $3)
          AND (division_code IS NULL OR division_code = $4)
@@ -198,44 +242,104 @@ exports.approveSignup = async (req, res) => {
     const user = userRes.rows[0];
     const { user_code } = user;
 
-    // 4. Assign the user
-    await pool.query(
-      `UPDATE m_user1 SET
-         user_name = $1,
-         password = $2,
-         email_id = $3,
-         mobile_number = $4,
-         first_name = $5,
-         middle_name = $6,
-         last_name = $7,
-         state_code = $8,
-         division_code = $9,
-         district_code = $10,
-         taluka_code = $11,
-         department_name = $12,
-         is_active = true,
-         is_assigned = true,
-         insert_by = $13,
-         insert_ip = '127.0.0.1',
-         insert_date = NOW()
-       WHERE user_code = $14`,
-      [
-        email, password, email, mobile, fname, mname, lname,
-        state_code, division_code, district_code, taluka_code,
-        department, approved_by, user_code
-      ]
-    );
+    // 5. Prepare dynamic update for m_user1.
+    // We'll include base columns always, and optionally set role-specific code columns
+    // (admin_state_code/admin_division_code/admin_district_code/viewer_code/data_code)
+    // only if they exist in m_user1. Query information_schema for existence.
 
-    // 5. Mark signup approved
+    const colsToCheck = [
+      'admin_state_code', 'admin_division_code', 'admin_district_code',
+      'viewer_code', 'data_code'
+    ];
+
+    const q = await pool.query(
+      `SELECT column_name
+       FROM information_schema.columns
+       WHERE table_name = 'm_user1' AND column_name = ANY($1::text[])`,
+      [colsToCheck]
+    );
+    const existingCols = new Set(q.rows.map(r => r.column_name));
+
+    // decide role-specific assignments
+    // For AD (Admin) we map user_level_code -> admin_* column to the signup location
+    const extraAssignments = {}; // columnName -> value
+    const lcRole = (approved_role_code || '').toUpperCase();
+
+    if (lcRole === 'AD' || lcRole === 'ADMIN') {
+      if (user_level_code === 'ST' && existingCols.has('admin_state_code')) {
+        extraAssignments['admin_state_code'] = state_code;
+      } else if (user_level_code === 'DV' && existingCols.has('admin_division_code')) {
+        extraAssignments['admin_division_code'] = division_code;
+      } else if (user_level_code === 'DT' && existingCols.has('admin_district_code')) {
+        extraAssignments['admin_district_code'] = district_code;
+      }
+    } else if (lcRole === 'VW' || lcRole === 'VIEWER') {
+      if (existingCols.has('viewer_code')) extraAssignments['viewer_code'] = user_code; // or some value — here we set created user's code
+    } else if (lcRole === 'DE' || lcRole === 'DATA') {
+      if (existingCols.has('data_code')) extraAssignments['data_code'] = user_code;
+    }
+
+    // 6. Build the UPDATE query dynamically with placeholders
+    const baseFields = [
+      'user_name', 'password', 'email_id', 'mobile_number',
+      'first_name', 'middle_name', 'last_name',
+      'state_code', 'division_code', 'district_code', 'taluka_code',
+      'department_name',
+      'is_active', 'is_assigned',
+      'insert_by', 'insert_ip', 'insert_date'
+    ];
+
+    const basePlaceholders = [];
+    const values = [];
+
+    // values order must match placeholders
+    values.push(email);           basePlaceholders.push('$' + values.length); // user_name
+    values.push(password);        basePlaceholders.push('$' + values.length); // password
+    values.push(email);           basePlaceholders.push('$' + values.length); // email_id
+    values.push(mobile);          basePlaceholders.push('$' + values.length); // mobile_number
+    values.push(fname);           basePlaceholders.push('$' + values.length); // first_name
+    values.push(mname);           basePlaceholders.push('$' + values.length); // middle_name
+    values.push(lname);           basePlaceholders.push('$' + values.length); // last_name
+    values.push(state_code);      basePlaceholders.push('$' + values.length); // state_code
+    values.push(division_code);   basePlaceholders.push('$' + values.length); // division_code
+    values.push(district_code);   basePlaceholders.push('$' + values.length); // district_code
+    values.push(taluka_code);     basePlaceholders.push('$' + values.length); // taluka_code
+    values.push(department);      basePlaceholders.push('$' + values.length); // department_name
+    values.push(true);            basePlaceholders.push('$' + values.length); // is_active
+    values.push(true);            basePlaceholders.push('$' + values.length); // is_assigned
+    values.push(approverCode);    basePlaceholders.push('$' + values.length); // insert_by
+    values.push('127.0.0.1');     basePlaceholders.push('$' + values.length); // insert_ip
+    values.push(new Date());      basePlaceholders.push('$' + values.length); // insert_date
+
+    // append extraAssignments
+    const extraSets = [];
+    for (const [col, val] of Object.entries(extraAssignments)) {
+      values.push(val);
+      extraSets.push(`${col} = $${values.length}`);
+    }
+
+    const setClauses = baseFields.map((f, i) => `${f} = ${basePlaceholders[i]}`).concat(extraSets);
+
+    const updateQuery = `
+      UPDATE m_user1 SET
+        ${setClauses.join(',\n        ')}
+      WHERE user_code = $${values.length + 1}
+    `;
+
+    values.push(user_code); // last placeholder is WHERE user_code = $n
+
+    await pool.query(updateQuery, values);
+
+    // 7. Mark signup approved using approver's code
     await pool.query(
-      `UPDATE signup SET is_approved = true, approved_by = $1 WHERE id = $2`,
-      [approved_by, id]
+      `UPDATE signup SET is_approved = true, approved_by = $1, updated_date = NOW(), update_by = $2 WHERE id = $3`,
+      [approverCode, approverCode, id]
     );
 
     return res.json({ success: true, assigned_user_code: user_code });
   } catch (err) {
     console.error("Approval error:", err);
-    return res.status(500).json({ error: "Approval failed" });
+    return res.status(500).json({ error: "Approval failed", details: err.message });
   }
 };
 
