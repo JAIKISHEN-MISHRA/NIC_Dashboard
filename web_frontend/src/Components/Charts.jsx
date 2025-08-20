@@ -1,130 +1,80 @@
-import React, { useState, useEffect } from "react";
-import { Box, Typography, Grid } from "@mui/material";
-import ChartToolbar from "./ChartToolbar";
-import ChartSection from "./ChartSection";
-import TimeSeriesCharts from "./TimeSeriesCharts";
-import { extractChartSections, transformTimeSeries } from "./chartUtils";
+// src/Components/Charts.js
+import React, { useMemo } from 'react';
+import { Grid, Box, Typography } from '@mui/material';
+import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import SummaryCard from './SummaryCard';
+import SmartChart from './SmartChart';
+import {
+  calculateGrandTotal,
+  calculateSummaries,
+  extractChartSections,
+  transformTimeSeriesData,
+  COLORS,
+} from './chartUtils';
 
-export default function Charts({ data, timeSeries = false }) {
-  const [selectedKeys, setSelectedKeys] = useState([]);
-  const [availableKeys, setAvailableKeys] = useState([]);
+export default function Charts({ data, isTimeSeries }) {
+  // Use useMemo to prevent recalculating on every render
+  const chartData = useMemo(() => {
+    if (!data) return null;
 
-  useEffect(() => {
-    if (!data || typeof data !== "object") return;
-
-    let keys = new Set();
-
-    if (timeSeries) {
-      const series = transformTimeSeries(data);
-      for (const section of Object.values(series)) {
-        section.data.forEach((entry) => {
-          Object.keys(entry).forEach((k) => {
-            if (k !== "label" && k !== "name") keys.add(k);
-          });
-        });
-      }
+    if (isTimeSeries) {
+      return { timeSeries: transformTimeSeriesData(data) };
     } else {
-      const walk = (node) => {
-        if (node && typeof node === "object") {
-          for (const [key, value] of Object.entries(node)) {
-            if (typeof value === "number") {
-              keys.add(key);
-            } else if (typeof value === "object" && value !== null) {
-              walk(value);
-            }
-          }
-        }
-      };
-      walk(data);
+      const grandTotal = calculateGrandTotal(data);
+      const summaries = calculateSummaries(data, grandTotal);
+      const sections = extractChartSections(data);
+      return { summaries, sections };
     }
+  }, [data, isTimeSeries]);
 
-    setAvailableKeys(Array.from(keys));
-  }, [data, timeSeries]);
-
-  const filterData = (sectionData) => {
-    if (!selectedKeys.length) return sectionData;
-    return sectionData.map((entry) => {
-      const filtered = {};
-      if (entry.label) filtered.label = entry.label;
-      if (entry.name) filtered.name = entry.name;
-      selectedKeys.forEach((k) => {
-        if (entry[k] !== undefined) filtered[k] = entry[k];
-      });
-      return filtered;
-    });
-  };
-
-  if (!data || typeof data !== "object") {
-    return <Typography>No data available.</Typography>;
+  if (!chartData) {
+    // This can be replaced with a more elegant "No Data" component
+    return <Typography>No data available to display charts.</Typography>;
   }
 
-  const hasValidData = (dataArray) => {
-    if (!Array.isArray(dataArray) || dataArray.length === 0) return false;
-    return dataArray.some((entry) =>
-      Object.values(entry).some(
-        (val) => typeof val === "number" && val !== 0 && !isNaN(val)
-      )
-    );
-  };
-
-  if (timeSeries) {
-    const series = transformTimeSeries(data);
-
-    const filteredSeriesEntries = Object.entries(series).filter(
-      ([, section]) => hasValidData(filterData(section.data))
-    );
-
-    if (filteredSeriesEntries.length === 0) {
-      return <Typography>No data available for selected parameters.</Typography>;
-    }
-
-    const filteredSeries = Object.fromEntries(filteredSeriesEntries);
+  // --- RENDER TIME SERIES VIEW ---
+  if (isTimeSeries) {
+    const { data: tsData, keys } = chartData.timeSeries;
+    if (tsData.length === 0) return <Typography>No time series data points found.</Typography>;
 
     return (
-      <Box>
-        <Typography variant="h5" mb={2}>
-          Time Series Charts
-        </Typography>
-
-        {/* Show toolbar ONLY in time series mode */}
-        <ChartToolbar
-          selectedKeys={selectedKeys}
-          setSelectedKeys={setSelectedKeys}
-          availableKeys={availableKeys}
-        />
-
-        <TimeSeriesCharts series={filteredSeries} filterData={filterData} />
+      <Box p={2}>
+        <Typography variant="h5" gutterBottom>Time Series Analysis</Typography>
+        <Box sx={{ width: '100%', height: 400 }}>
+          <ResponsiveContainer>
+            <LineChart data={tsData}>
+              <XAxis dataKey="label" tick={{ fontSize: 12 }} angle={-20} textAnchor="end" height={50} />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              {keys.map((key, i) => (
+                <Line key={key} type="monotone" dataKey={key} stroke={COLORS[i % COLORS.length]} dot={false} />
+              ))}
+            </LineChart>
+          </ResponsiveContainer>
+        </Box>
       </Box>
     );
   }
 
-  // Summary mode (NO toolbar here)
-  const allSections = extractChartSections(data).filter(
-    (section) =>
-      !selectedKeys.length ||
-      section.data.some((d) => selectedKeys.includes(d.name))
-  );
-
-  const filteredSections = allSections.filter((section) =>
-    hasValidData(filterData(section.data))
-  );
-
-  if (filteredSections.length === 0) {
-    return <Typography>No data available for selected parameters.</Typography>;
-  }
-
+  // --- RENDER DASHBOARD VIEW ---
+  const { summaries, sections } = chartData;
   return (
     <Box>
-      <Typography variant="h5" mb={2}>
-        Dashboard Insights
-      </Typography>
+      {/* 1. Summary Cards Section */}
+      <Grid container spacing={3} mb={4}>
+        {summaries.map((summary, index) => (
+          <Grid item xs={12} sm={6} md={4} lg={2.4} key={index}>
+            <SummaryCard title={summary.title} value={summary.value} />
+          </Grid>
+        ))}
+      </Grid>
 
-      {/* NO ChartToolbar here in summary */}
-
-      <Grid container spacing={2}>
-        {filteredSections.map((section, idx) => (
-          <Grid item xs={12} md={6} key={idx}>
-            <ChartSection section={{ ...section, data: filterData(section.data) }} />
+      {/* 2. Dynamic Charts Section */}
+      <Grid container spacing={3}>
+        {sections.map((section, index) => (
+          <Grid item xs={12} md={6} lg={4} key={index}>
+            <SmartChart section={section} />
           </Grid>
         ))}
       </Grid>

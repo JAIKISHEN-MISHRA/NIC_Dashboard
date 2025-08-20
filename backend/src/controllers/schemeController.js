@@ -229,7 +229,11 @@ exports.getSchemeCategoryTree = async (req, res) => {
 exports.getAllSchemes = async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT scheme_code, scheme_name, scheme_name_ll FROM m_scheme ORDER BY scheme_code`
+      `SELECT scheme_code, scheme_name, scheme_name_ll
+FROM m_scheme
+WHERE is_active = true
+ORDER BY scheme_code;
+`
     );
     res.json(result.rows);
   } catch (err) {
@@ -278,36 +282,47 @@ exports.insertSchemeData = async (req, res) => {
     role_code
   } = req.user;
 
-  // derive insert metadata
   const insert_by = getCurrentUser(req);
   const insert_ip = getClientIp(req);
 
   try {
-    // 1️⃣ Validate login data
+    // --- Basic auth / access checks (unchanged) ---
     if (!user_code || !user_level_code || !division_code) {
       return res.status(401).json({ error: "Please login to upload" });
     }
 
-    // 2️⃣ Validate State access
     if ((user_level_code === "ST" || user_level_code === "SA") && state_code !== user_state_code) {
       return res.status(401).json({ error: "User not of same State" });
     }
 
-    // 3️⃣ If user_level_code = DT but role_code = VW → reject
     if (user_level_code === "DT" && role_code === "VW") {
       return res.status(403).json({ error: "You have viewing rights, not upload rights" });
     }
 
-    // Basic data validation
+    // --- Validate required fields month/year and data ---
+    if (!year || !month) {
+      return res.status(400).json({ error: "Both 'year' and 'month' are required." });
+    }
+
+    const yearNum = Number(year);
+    const monthNum = Number(month);
+    const thisYear = new Date().getFullYear();
+    if (!Number.isInteger(yearNum) || yearNum < 2000 || yearNum > thisYear + 1) {
+      return res.status(400).json({ error: "Invalid 'year' value." });
+    }
+    if (!Number.isInteger(monthNum) || monthNum < 1 || monthNum > 12) {
+      return res.status(400).json({ error: "Invalid 'month' value (1-12)." });
+    }
+
     if (data === undefined || data === null) {
       return res.status(400).json({ error: "data field is required" });
     }
+
     // ensure data is JSON-serializable
     let jsonData;
     try {
       jsonData = typeof data === 'string' ? JSON.parse(data) : data;
     } catch (e) {
-      // if parsing fails, try to stringify original value
       try {
         jsonData = JSON.parse(JSON.stringify(data));
       } catch (err) {
@@ -315,13 +330,67 @@ exports.insertSchemeData = async (req, res) => {
       }
     }
 
-    // 4️⃣ Validate scheme_code to avoid SQL injection
+    // --- Validate scheme_code pattern (prevent injection via tableName) ---
+    if (!scheme_code || !/^[A-Za-z0-9_]+$/.test(scheme_code)) {
+      return res.status(400).json({ error: "Invalid scheme_code format." });
+    }
+
+    // 4️⃣ Validate scheme exists
     const validScheme = await pool.query(
       "SELECT scheme_code FROM m_scheme WHERE scheme_code=$1",
       [scheme_code]
     );
     if (validScheme.rowCount === 0) {
       return res.status(400).json({ error: "Invalid scheme_code" });
+    }
+
+    // Build table name and verify it exists (to avoid SQL errors)
+    const tableName = `t_${scheme_code}_data`;
+    const regRes = await pool.query("SELECT to_regclass($1) as tbl", [`public.${tableName}`]);
+    if (!regRes.rows[0] || !regRes.rows[0].tbl) {
+      return res.status(400).json({ error: `Data table for scheme does not exist: ${tableName}` });
+    }
+
+    // --- Duplicate checks: main table and approval table (null-safe) ---
+    // Use IS NOT DISTINCT FROM for null-safe comparison
+    const dupQuery = `
+      SELECT id
+      FROM ${tableName}
+      WHERE state_code = $1
+        AND division_code IS NOT DISTINCT FROM $2
+        AND district_code IS NOT DISTINCT FROM $3
+        AND taluka_code IS NOT DISTINCT FROM $4
+        AND year = $5
+        AND month = $6
+      LIMIT 1
+    `;
+    const dupValues = [state_code, division_code, district_code, taluka_code, String(year), String(month)];
+    const dupCheck = await pool.query(dupQuery, dupValues);
+    if (dupCheck.rowCount > 0) {
+      return res.status(409).json({ error: "Data for this scheme/location/month/year already exists. Duplicate insertion not allowed." });
+    }
+
+    // Also check approval table to avoid inserting duplicate pending/approved requests
+    const dupApprovalQuery = `
+      SELECT id, status
+      FROM approval
+      WHERE division_code IS NOT DISTINCT FROM $1
+        AND scheme_code = $2
+        AND state_code = $3
+        AND district_code IS NOT DISTINCT FROM $4
+        AND taluka_code IS NOT DISTINCT FROM $5
+        AND year = $6
+        AND month = $7
+        AND status IN ('PENDING', 'APPROVED')
+      LIMIT 1
+    `;
+    const dupApprovalValues = [division_code, scheme_code, state_code, district_code, taluka_code, String(year), String(month)];
+    const dupApproval = await pool.query(dupApprovalQuery, dupApprovalValues);
+    if (dupApproval.rowCount > 0) {
+      const existing = dupApproval.rows[0];
+      return res.status(409).json({
+        error: `There is already an ${existing.status.toLowerCase()} entry for this scheme/location/month/year in approval table. Duplicate insertion not allowed.`
+      });
     }
 
     // 5️⃣ If DT + AD → Insert into Approval table (store insert_by/insert_ip)
@@ -345,8 +414,8 @@ exports.insertSchemeData = async (req, res) => {
         state_code,
         district_code,
         taluka_code,
-        year,
-        month,
+        String(year),
+        String(month),
         JSON.stringify(jsonData),
         insert_by,
         insert_ip
@@ -360,8 +429,6 @@ exports.insertSchemeData = async (req, res) => {
     }
 
     // 6️⃣ Default → Direct insert into scheme-specific table (include insert_by/insert_ip)
-    const tableName = `t_${scheme_code}_data`;
-
     const insertQuery = `
       INSERT INTO ${tableName} (
         state_code, division_code, district_code, taluka_code,
@@ -375,8 +442,8 @@ exports.insertSchemeData = async (req, res) => {
       division_code,
       district_code,
       taluka_code,
-      year,
-      month,
+      String(year),
+      String(month),
       JSON.stringify(jsonData),
       insert_by,
       insert_ip
@@ -393,6 +460,7 @@ exports.insertSchemeData = async (req, res) => {
     res.status(500).json({ error: "Failed to insert data" });
   }
 };
+
 
 
 
