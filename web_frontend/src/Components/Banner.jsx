@@ -2,9 +2,9 @@ import React from 'react';
 import Slider from 'react-slick';
 import '../css/BannerSlider.css';
 
-import banner1 from '../assets/banner1.jpg';
- import banner2 from '../assets/Banner.jpeg';
- import banner3 from "../assets/DSC_0194-1500x520-2.jpg"
+import banner1 from '../assets/nic1.png';
+ import banner2 from '../assets/nic4.png';
+ import banner3 from '../assets/nic3.png';
 // import bannerVideo from '../assets/banner3.mp4';
 
 const BannerSlider = () => {

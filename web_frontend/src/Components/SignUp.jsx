@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { toast } from "react-toastify";
-import "../css/signup.css";
+import "../css/SignUp.css";
 import { Link } from "react-router-dom";
 import SHA256 from "crypto-js/sha256";
 import {
@@ -263,7 +263,7 @@ export default function SignUp() {
                     required
                   />
                   <button type="button" className="eye-btn" onClick={() => p === "password" ? setShowPassword(s => !s) : setShowConfirm(s => !s)}>
-                    {p === "password" ? (showPassword ? "🙈" : "👁️") : showConfirm ? "🙈" : "👁️"}
+                    {p === "password" ? (showPassword ? "🔓" : "🔒") : showConfirm ? "🔓" : "🔒"}
                   </button>
                 </div>
               </div>

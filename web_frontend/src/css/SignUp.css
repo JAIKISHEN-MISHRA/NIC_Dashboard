@@ -5,8 +5,8 @@
   --bg-top: #ffffff;
   --bg-mid: #ffefdc;
   --bg-bottom: #e0f3e0;
-  --accent: #ff6600;
-  --accent-dark: #e65c00;
+  --accent: #3b7a9b;
+  --accent-dark: #003366;
   --muted: #9aa6b2;
   --text: #003366;
   --danger: #cc0000;
@@ -29,7 +29,8 @@ html, body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: var(--text);
-  background: linear-gradient(to bottom, var(--bg-top), var(--bg-mid), var(--bg-bottom));
+  background-color: #e0f1fa;
+  /* background: linear-gradient(to bottom, var(--bg-top), var(--bg-mid), var(--bg-bottom)); */
   overflow-x: hidden;
   overflow-y: auto;
 }
@@ -99,7 +100,7 @@ html, body, .container { transform: none !important; -webkit-transform: none !im
 /* title */
 .login-title {
   text-align: left;
-  color: var(--accent);
+  color: #003366;
   margin: 0 0 16px;
   font-weight: 700;
   font-size: 1.3rem;
@@ -149,7 +150,7 @@ input,
 select,
 textarea {
   padding: 12px 14px;
-  border: 1px solid rgba(255,204,204,0.9);
+  border: 1px solid #003366;
   border-radius: 12px;
   outline: none;
   width: 100%;

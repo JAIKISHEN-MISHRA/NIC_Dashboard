@@ -197,7 +197,7 @@ export default function Login() {
                     color: "#555",
                   }}
                 >
-                  {showPass ? <AiOutlineEyeInvisible /> : <AiOutlineEye />}
+                  {showPass ? <AiOutlineEye /> : <AiOutlineEyeInvisible />}
                 </button>
               </div>
 
