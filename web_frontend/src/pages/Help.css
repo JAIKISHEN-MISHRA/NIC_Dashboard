@@ -67,3 +67,20 @@
   font-size: 1rem;
   color: #444;
 }
+
+.contact-box {
+  display: inline-block;
+  padding: 6px 14px;
+  margin: 0 5px;
+  background: #007bff;
+  color: #fff !important;
+  border-radius: 6px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.contact-box:hover {
+  background: #0056b3;
+  transform: translateY(-2px);
+}

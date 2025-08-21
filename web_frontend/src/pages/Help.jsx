@@ -47,7 +47,7 @@ const Help = () => {
             at your fingertips.
           </p>
           <p>
-            Need assistance? Visit our <strong><a href="/contact">Contact Us</a></strong> page, and our support team
+            Need assistance? Visit our <strong><a href="/contact" className="contact-box">Contact Us</a></strong> page, and our support team
             will be happy to guide you through any questions.
           </p>
         </div>

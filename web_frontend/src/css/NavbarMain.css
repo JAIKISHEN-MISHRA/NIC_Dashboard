@@ -46,7 +46,7 @@
 
 
 .nav-links li a:hover {
-  background-color: salmon;  /* Background on hover */
+  background-color: navy;  /* Background on hover */
   color: #ffffff;             /* Text color on hover */
 }
 

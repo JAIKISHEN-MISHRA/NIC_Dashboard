@@ -18,10 +18,10 @@ const Footer = () => {
       {/* Info Section */}
       <div className="footer-middle">
         <p>
-          Content Owned by National Informatics Centre(NIC), Mumbai City 
+          Content of MahitiSetu is published, managed and owned by Respective Departments, Government of India.
         </p>
         <p>
-          © Mumbai City Collectorate, Developed and hosted by{" "}
+          © NIC, Developed and hosted by{" "}
           <a
             href="https://www.nic.in/"
             target="_blank"

@@ -16,7 +16,7 @@
 /* Styling for the dashboard description section */
 .dashboard-info {
   padding: 40px 20px;
-  /* background: linear-gradient(to bottom, rgb(253, 198, 96), #ffefdc, rgb(147, 219, 147));; */
+  /* background: linear-gradient(to bottom, rgb(253, 253, 253), #ffefdc, rgb(147, 147, 147));; */
   text-align: center;
   border-bottom: 2px solid black;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);

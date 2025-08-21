@@ -37,7 +37,7 @@ const Contact = () => {
             <div className="emoji">📧</div>
             <div>
               <div className="label">General Email</div>
-              <a href="mailto:contact@mahitisetu.gov">contact@mahitisetu.gov</a>
+              <a href="mailto:collector.mumbaicity@maharashtra.gov.in">collector.mumbaicity@maharashtra.gov.in</a>
             </div>
           </div>
 
@@ -45,7 +45,7 @@ const Contact = () => {
             <div className="emoji">📞</div>
             <div>
               <div className="label">Helpline</div>
-              <a href="tel:+919876543210">+91 98765 43210</a>
+              <a href="tel:022-22665233, 22662440">022-22665233, 22662440</a>
             </div>
           </div>
         </div>
@@ -54,27 +54,13 @@ const Contact = () => {
       <div className="contact-grid">
         {/* left: contact persons */}
         <aside className="contact-card">
-          <h2>Contact Persons</h2>
+          <h2>Contact To</h2>
 
-          <div className="person">
-            <div className="avatar">👩‍💼</div>
-            <div className="person-info">
-              <div className="name">Amod Suryavanshi</div>
-              <div className="role">Project Lead</div>
-              <a href="mailto:amod.suryavanshi@nic.gov">amod.suryavanshi@nic.gov</a>
-              <a className="tel" href="tel:+919876543210">+91 9876543210</a>
-            </div>
-          </div>
+          <p>This website is designed & developed by National Informatics Center and maintained by District Administration Mumbai City, Government of Maharashtra.
 
-          <div className="person">
-            <div className="avatar">👨‍💻</div>
-            <div className="person-info">
-              <div className="name">AshwiniKumar Potdar</div>
-              <div className="role">Tahshildar</div>
-              <a href="mailto:ashwinikumar.potdar@niv.gov">ashwinikumar.potdar@niv.gov</a>
-              <a className="tel" href="tel:+919876543210">+91 9876543210</a>
-            </div>
-          </div>
+In case you have any query regarding this website, you may write to the Web Information Manager at  collector.mumbaicity[at]maharashtra[dot]gov[dot]in
+
+Any feedback, related to content, design, or technology may be submitted at Message Section</p>
 
           <div className="note">
             <strong>Office:</strong> Collectorate Office, Mumbai<br />

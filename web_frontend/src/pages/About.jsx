@@ -1,6 +1,6 @@
 import React from "react";
 import "./About.css";
-import aboutImage from "../assets/aboutus.jpeg";
+import aboutImage from "../assets/about_image.png";
 
 const About = () => {
   return (
@@ -8,9 +8,9 @@ const About = () => {
       {/* Hero Section */}
       <section className="about-hero">
         <div className="about-text">
-          <h1>About Our Dashboard</h1>
+          <h1>About MahitiSetu</h1>
           <p>
-            Our Government Schemes Dashboard is designed to give administrators
+            MahitiSetu is an application designed to give administrators
             a clear, data-driven view of ongoing programs. With real-time
             analytics, gender-wise statistics, and interactive visualizations,
             the platform empowers decision-makers to track progress, identify

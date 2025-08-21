@@ -270,6 +270,9 @@ export default function Upload() {
         const payload = res?.data ?? res;
         if (payload?.data) setSchemeStructure(payload.data);
         setSchemeFrequency(payload?.frequency ?? null);
+        console.log(payload.frequency)
+
+        // reset period controls
         setDailyMonth("");
         setDailyStartDate("");
         setDailyEndDate("");
