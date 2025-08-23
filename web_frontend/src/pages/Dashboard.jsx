@@ -29,6 +29,7 @@ export default function Dashboard() {
   const [selectedScheme, setSelectedScheme] = useState("");
   const [year, setYear] = useState("");
   const [month, setMonth] = useState("");
+  // dashboardData now stores an object: { merged, stats, explanations }
   const [dashboardData, setDashboardData] = useState(null);
   const [timeSeriesData, setTimeSeriesData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -253,7 +254,25 @@ export default function Dashboard() {
         ? await getTimeSeriesData(payload)
         : await getDashboardData(payload);
 
-      isTimeSeries ? setTimeSeriesData(res.data) : setDashboardData(res.data);
+      const data = res?.data ?? res;
+      console.log(res.data);
+
+      if (isTimeSeries) {
+        // ensure we always store an array
+        setTimeSeriesData(Array.isArray(data) ? data : (data.timeSeries || []));
+        setDashboardData(null);
+      } else {
+        // backend returns { merged, stats, explanations }
+        if (data && (data.merged || data.stats || data.explanations)) {
+          setDashboardData({ merged: data.merged || {}, stats: data.stats || null, explanations: data.explanations || null });
+        } else if (data && typeof data === 'object') {
+          // older/alternate shape: raw merged object
+          setDashboardData({ merged: data, stats: null, explanations: null });
+        } else {
+          setDashboardData({ merged: {}, stats: null, explanations: null });
+        }
+        setTimeSeriesData(null);
+      }
     } catch (err) {
       console.error("Failed to fetch dashboard data:", err);
       setError("Failed to fetch dashboard data.");
@@ -275,7 +294,7 @@ export default function Dashboard() {
 
   const dropdowns = [
     {
-      label: "Scheme",
+      label: "Scheme *",
       value: selectedScheme,
       onChange: setSelectedScheme,
       options: schemes.map((s) => ({ value: s.scheme_code, label: s.scheme_name })),
@@ -293,7 +312,7 @@ export default function Dashboard() {
       options: months.map((m) => ({ value: m, label: m })),
     },
     {
-      label: "State",
+      label: "State *",
       value: selectedState,
       onChange: setSelectedState,
       options: states.map((s) => ({ value: s.state_code, label: s.state_name })),
@@ -426,6 +445,14 @@ export default function Dashboard() {
     return null;
   };
 
+  const hasDashboardContent = () => {
+    return dashboardData && dashboardData.merged && Object.keys(dashboardData.merged).length > 0;
+  };
+
+  const hasTimeSeriesContent = () => {
+    return Array.isArray(timeSeriesData) && timeSeriesData.length > 0;
+  };
+
   return (
     <Box p={3}>
       <WelcomeBanner />
@@ -458,10 +485,19 @@ export default function Dashboard() {
 
       {!loading && !error && (
         <>
-          {!isTimeSeries && dashboardData && <Charts data={dashboardData} />}
-          {isTimeSeries && timeSeriesData && <Charts timeSeries data={timeSeriesData} />}
+          {!isTimeSeries && hasDashboardContent() && (
+            <Charts
+              data={dashboardData.merged}
+              stats={dashboardData.stats}
+              explanations={dashboardData.explanations}
+            />
+          )}
 
-          {!dashboardData && !timeSeriesData && <EmptyState />}
+          {isTimeSeries && hasTimeSeriesContent() && (
+            <Charts timeSeries data={timeSeriesData} />
+          )}
+
+          {!hasDashboardContent() && !hasTimeSeriesContent() && <EmptyState />}
         </>
       )}
     </Box>

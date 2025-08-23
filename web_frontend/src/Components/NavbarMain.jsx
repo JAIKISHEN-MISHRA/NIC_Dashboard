@@ -52,7 +52,8 @@ const NavbarMain = () => {
   return (
     <nav className="navbar">
       <div className="nav-left">
-        <img src={emblem} alt="Emblem" className="nav-emblem" />
+        <Link to="/">
+        <img src={emblem} alt="Emblem" className="nav-emblem" /></Link>
         <ul className="nav-links">
           <li><Link to="/">Home</Link></li>
           <li><Link to="/dashboard">Dashboard</Link></li>

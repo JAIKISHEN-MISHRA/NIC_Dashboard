@@ -306,6 +306,7 @@ export default function Upload() {
             <input
               type="number"
               min="0" // CHANGE: Prevents negative numbers
+              step="any"
               value={getNestedValue(formData.data, fullPath) ?? ""}
               onChange={(e) => handleInputChange(fullPath, e.target.value)}
               onWheel={(e) => e.target.blur()} // CHANGE: Disables mouse wheel scroll
