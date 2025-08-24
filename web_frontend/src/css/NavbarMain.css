@@ -2,7 +2,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  /* background-color: #003366; */
+  background-color:rgb(48, 48, 168);
   padding: 10px 31px;
   border-bottom: 2px solid #d3d3d3;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -36,7 +36,7 @@
 }
 
 .nav-links li a {
-  color: #003366;
+  color:white;
   text-decoration: none;
   font-weight: 500;
   padding: 6px 12px;           /* Add padding to create shape */
@@ -46,7 +46,7 @@
 
 
 .nav-links li a:hover {
-  background-color: navy;  /* Background on hover */
+  background-color:navy;  /* Background on hover */
   color: #ffffff;             /* Text color on hover */
 }
 
@@ -54,7 +54,7 @@
 .nav-right {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 100px;
 }
 
 .nav-image {

@@ -6,6 +6,8 @@ import Header from '../Components/Header';
 import NavbarMain from '../Components/NavbarMain';
 import Footer from '../Components/Footer';
 import './MainPage.css';
+import NavbarTop from '../Components/NavbarTop';
+
 
 export default function MainPage() {
   return (
@@ -13,6 +15,7 @@ export default function MainPage() {
       {/* Header */}
       <div className="fixed-header">
         <Header />
+        <NavbarTop/>
         <NavbarMain />
       </div>
 

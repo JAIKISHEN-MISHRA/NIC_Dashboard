@@ -14,3 +14,24 @@
   object-fit: cover;
   max-height: 100%;
 }
+.slider-controls {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 10px;
+}
+
+.slider-controls button {
+  background: #2a2a9e;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.3s ease;
+}
+
+.slider-controls button:hover {
+  background: #1b1b6d;
+}

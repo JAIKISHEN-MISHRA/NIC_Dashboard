@@ -6,7 +6,7 @@ import {jwtDecode} from 'jwt-decode'; // default import
 
 import '../css/NavbarMain.css';
 import emblem from '../assets/emblem.png';
-import img1 from '../assets/NIC_Preview-1.png';
+//import img1 from '../assets/NIC_Preview-1.png';
 
 // Helper: decode JWT token
 const getTokenData = () => {
@@ -78,7 +78,7 @@ const NavbarMain = () => {
       </div>
 
       <div className="nav-right">
-        <img src={img1} alt="Extra Icon" className="nav-extra-icon" />
+        {/* <img src={img1} alt="Extra Icon" className="nav-extra-icon" /> */}
 
         {isLoggedIn ? (
           <>
@@ -86,7 +86,7 @@ const NavbarMain = () => {
               size="large"
               color="inherit"
               onClick={handleMenuOpen}
-              sx={{ color: 'black', display: 'flex', alignItems: 'center' }}
+              sx={{ color: 'white', display: 'flex', alignItems: 'center' }}
             >
               <AccountCircle fontSize="large" />
               {/* small, lowercase first name next to the icon */}
@@ -96,7 +96,7 @@ const NavbarMain = () => {
                   ml: 1,
                   lineHeight: 1,
                   fontWeight: 500,
-                  color: 'black'
+                  color: 'white'
                 }}
               >
                 {firstName}
