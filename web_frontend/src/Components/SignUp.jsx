@@ -222,7 +222,7 @@ export default function SignUp() {
       </header>
 
       <main className="login-box">
-        <h2 className="login-title">Sign Up</h2>
+        <h2 className="login-title">Onboarding</h2>
         <form className="form-grid form" onSubmit={handleSubmit}>
           {/* Name Row */}
           <div className="form-row name-row">

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react"; 
 import { toast } from "react-toastify";
 import {
   getStates,
@@ -288,6 +288,119 @@ export default function Upload() {
     }
   };
 
+
+const downloadSchemeStructureCSV = async () => {
+  if (!formData.scheme_code) {
+    toast.error('Please select a scheme first');
+    return;
+  }
+
+  try {
+    const res = await fetchSchemeStructure(formData.scheme_code);
+    const payload = res?.data ?? res;
+    const structure = payload?.data ?? payload;
+
+    if (!structure || structure.length === 0) {
+      toast.info('No scheme structure available to download');
+      return;
+    }
+
+    // format node: primary + optional newline + local-language
+    const formatCell = (node) => {
+      if (!node) return '';
+      const primary = node.category_name ?? node.name ?? '';
+      const ll = node.category_name_ll ?? node.name_ll ?? '';
+      return ll ? `${primary}\n${ll}` : primary;
+    };
+
+    // For each root build its leaves and each leaf's full chain (root-first)
+    const rootBlocks = structure.map(root => {
+      const leaves = [];
+      const walk = (node, ancestors = []) => {
+        const chain = [...ancestors, node];
+        if (!node.children || node.children.length === 0) {
+          leaves.push({ chain, node });
+        } else {
+          for (const c of node.children) walk(c, chain);
+        }
+      };
+      walk(root, []);
+      return { root, leaves }; // leaves is an array of {chain,node}, chain[0] === root
+    });
+
+    // global max depth (max chain length among all leaves)
+    const maxDepth = rootBlocks.reduce((md, block) => {
+      const blockMax = block.leaves.reduce((m, lf) => Math.max(m, lf.chain.length), 0);
+      return Math.max(md, blockMax);
+    }, 0);
+
+    // Build rows. Each root-block becomes a horizontal block:
+    // [ Parent column ] [ leaf1 ] [ leaf2 ] ... [ leafN ]
+    // Rows:
+    // row 0 -> parent column holds parent name; leaf columns empty
+    // row r (r>=1) -> parent column empty; each leaf column shows chain[r] (if present)
+    const rows = [];
+    for (let r = 0; r < maxDepth; r++) {
+      const row = [];
+      for (const block of rootBlocks) {
+        const { root, leaves } = block;
+        // parent column
+        if (r === 0) {
+          row.push(formatCell(root));
+        } else {
+          row.push(''); // parent column empty for deeper rows
+        }
+
+        // leaf columns for this root
+        for (const lf of leaves) {
+          const nodeAtLevel = lf.chain[r] || null; // chain[0] is root
+          row.push(formatCell(nodeAtLevel));
+        }
+
+        // Note: if a root has zero leaves (rare if root is leaf itself), we still created one parent col above
+        // If block.leaves is empty, we do not append any leaf columns.
+      }
+      rows.push(row);
+    }
+
+    // CSV escaping (preserve newlines in cells)
+    const escape = (s) => `"${String(s ?? '').replace(/"/g, '""')}"`;
+
+    // To ensure each CSV row has the same number of columns, determine max columns per row and pad
+    const maxCols = rows.reduce((m, r) => Math.max(m, r.length), 0);
+    const padRow = (r) => {
+      const copy = r.slice();
+      while (copy.length < maxCols) copy.push('');
+      return copy;
+    };
+
+    const csvLines = rows.map(r => padRow(r).map(escape).join(','));
+    const csv = csvLines.join('\n');
+
+    // Prepend UTF-8 BOM for Excel compatibility with Marathi
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' });
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `scheme_structure_${formData.scheme_code || 'structure'}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+
+    toast.success('Scheme structure CSV downloaded (compact parent columns, UTF-8)');
+  } catch (err) {
+    console.error('CSV download failed', err);
+    toast.error('Failed to download scheme structure');
+  }
+};
+
+
+
+
+
   const renderCategoryInputs = (categories, periodKey = "", parentDataPath = "", parentReactKey = "") => {
     return categories.map((cat, index) => {
       const safeKey = `${cat.category_name}_${cat.category_id || index}`;
@@ -428,10 +541,17 @@ export default function Upload() {
       <h2>Upload Scheme Data</h2>
       <form onSubmit={handleSubmit}>
         <label>Scheme</label>
-        <select name="scheme_code" value={formData.scheme_code} onChange={handleChange} required>
-          <option value="">Select Scheme</option>
-          {schemes.map((s) => (<option key={s.scheme_code} value={s.scheme_code}>{s.scheme_name}</option>))}
-        </select>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <select name="scheme_code" value={formData.scheme_code} onChange={handleChange} required>
+            <option value="">Select Scheme</option>
+            {schemes.map((s) => (<option key={s.scheme_code} value={s.scheme_code}>{s.scheme_name}</option>))}
+          </select>
+
+          {/* Download CSV button placed next to scheme dropdown. It fetches the latest structure from API and downloads a CSV that preserves the hierarchy. */}
+          <button type="button" onClick={downloadSchemeStructureCSV} disabled={!formData.scheme_code} style={{ padding: '6px 10px' }}>
+            Download Structure (CSV)
+          </button>
+        </div>
 
         <div style={{ marginTop: 12 }}>
           <strong>Scheme Frequency:</strong> {schemeFrequency ?? "—"}

@@ -1,3 +1,4 @@
+import React from "react";
 import {
   Box,
   Button,
@@ -9,47 +10,113 @@ import {
 } from "@mui/material";
 import { Search } from "@mui/icons-material";
 
-export default function FilterPanel({ dropdowns, isTimeSeries, setIsTimeSeries, handleSubmit, loading }) {
+export default function FilterPanel({
+  dropdowns,
+  isTimeSeries,
+  setIsTimeSeries,
+  handleSubmit,
+  loading,
+}) {
   return (
-    <Card elevation={4} sx={{ p: 2, mb: 3, borderRadius: 3 }}>
-      <Box display="flex" gap={2} flexWrap="wrap">
-        {dropdowns.map(({ label, value, onChange, options, disabled = false }) => (
-          <FormControl key={label} disabled={disabled} sx={{ minWidth: 140 }}>
-            <InputLabel>{label}</InputLabel>
-            <Select value={value} onChange={(e) => onChange(e.target.value)}>
-              {options.map((opt) => (
-                <MenuItem key={opt.value} value={opt.value}>
-                  {opt.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        ))}
+    <Card elevation={4} sx={{ p: { xs: 1.5, sm: 2 }, mb: 3, borderRadius: 3 }}>
+      <Box
+        component="form"
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSubmit?.();
+        }}
+        sx={{
+          display: "flex",
+          flexDirection: { xs: "column", sm: "row" },
+          gap: { xs: 1.5, sm: 2 },
+          alignItems: { xs: "stretch", sm: "center" },
+          flexWrap: "wrap",
+        }}
+      >
+        {/* dynamic dropdowns */}
+        {dropdowns.map(({ label, value, onChange, options, disabled = false }, idx) => {
+          const labelId = `filter-label-${idx}`;
+          const selectId = `filter-select-${idx}`;
+          return (
+            <FormControl
+              key={label + idx}
+              disabled={disabled}
+              fullWidth={true}
+              sx={{
+                minWidth: { sm: 140 },
+                width: { xs: "100%", sm: "auto" },
+                flex: { xs: "1 1 100%", sm: "0 0 auto" },
+              }}
+              size="small"
+            >
+              <InputLabel id={labelId}>{label}</InputLabel>
+              <Select
+                labelId={labelId}
+                id={selectId}
+                value={value ?? ""}
+                label={label}
+                onChange={(e) => onChange(e.target.value)}
+              >
+                {options.map((opt) => (
+                  <MenuItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          );
+        })}
 
-        {/* View Mode */}
-        <FormControl sx={{ minWidth: 180 }}>
-          <InputLabel>View Mode</InputLabel>
+        {/* view mode select */}
+        <FormControl
+          fullWidth
+          sx={{
+            minWidth: { sm: 180 },
+            width: { xs: "100%", sm: "auto" },
+            flex: { xs: "1 1 100%", sm: "0 0 auto" },
+          }}
+          size="small"
+        >
+          <InputLabel id="viewmode-label">View Mode</InputLabel>
           <Select
+            labelId="viewmode-label"
+            id="viewmode-select"
             value={isTimeSeries ? "time" : "summary"}
-            onChange={(e) => {
-              setIsTimeSeries(e.target.value === "time");
-            }}
+            label="View Mode"
+            onChange={(e) => setIsTimeSeries(e.target.value === "time")}
           >
             <MenuItem value="summary">Summary View</MenuItem>
             <MenuItem value="time">Time Series View</MenuItem>
           </Select>
         </FormControl>
 
-        {/* Action Button */}
-        <Button
-          variant="contained"
-          startIcon={<Search />}
-          onClick={handleSubmit}
-          disabled={loading}
-          sx={{ borderRadius: 2, px: 3 }}
+        {/* action button */}
+        <Box
+          sx={{
+            width: { xs: "100%", sm: "auto" },
+            flex: { xs: "1 1 100%", sm: "0 0 auto" },
+            display: "flex",
+            alignItems: "center",
+          }}
         >
-          {loading ? "Loading..." : ""}
-        </Button>
+          <Button
+            type="submit"
+            variant="contained"
+            startIcon={<Search />}
+            onClick={handleSubmit}
+            disabled={loading}
+            fullWidth={true}
+            sx={{
+              borderRadius: 2,
+              px: { xs: 2, sm: 3 },
+              py: { xs: 1.1, sm: 0.7 },
+              whiteSpace: "nowrap",
+            }}
+            aria-label="Search"
+          >
+            {loading ? "Loading..." : "Search"}
+          </Button>
+        </Box>
       </Box>
     </Card>
   );
